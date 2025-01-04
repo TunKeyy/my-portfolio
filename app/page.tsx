@@ -508,7 +508,7 @@ function FieldsSection() {
             Fields
           </h2>
           <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
-            The fields in which I have much experiences
+            The fields in which I have much experience
           </h3>
         </div>
 
@@ -563,45 +563,41 @@ function CertificatesSection() {
     <FadeInSection>
       <section className="py-20 bg-gray-50 dark:bg-gray-800" id="certificates">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-xl text-gray-600 dark:text-gray-400 tracking-wider mb-1">
-              Certificates
-            </h2>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
-              English Certifications
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {certificates.map((cert) => (
-              <div 
-                key={cert.id} 
-                className="bg-white dark:bg-gray-700 rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row transition-transform duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl"
-              >
-                <div className="md:w-2/5">
-                  <img
-                    src={cert.image}
-                    alt={`${cert.title} Certificate`}
-                    className="object-cover w-full h-full"
-                  />
-                </div>
-                <div className="p-6 md:w-3/5">
-                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                    {cert.title}
-                  </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                    {cert.issuer}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                    {cert.date}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    {cert.description}
-                  </p>
-                </div>
+        <div className="text-center mb-12 mt-12">
+          <h2 className="text-sm uppercase text-gray-600 dark:text-gray-400 tracking-wider mb-1">
+            Certifications
+          </h2>
+          <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
+            English Certifications
+          </h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {certificates.map((cert) => (
+            <div key={cert.id} className="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden flex h-[180px] hover:shadow-lg transition-shadow">
+              <div className="w-1/3 p-6 flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+                <img
+                  src={cert.image}
+                  alt={`${cert.title} logo`}
+                  className="max-w-full max-h-full object-contain"
+                />
               </div>
-            ))}
-          </div>
+              <div className="w-2/3 p-4 flex flex-col justify-center">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                  {cert.title}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                  {cert.issuer}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  {cert.date}
+                </p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  {cert.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
         </div>
       </section>
     </FadeInSection>
