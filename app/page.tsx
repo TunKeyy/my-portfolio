@@ -6,12 +6,29 @@ import { useInView } from 'react-intersection-observer'
 import { Sun, Moon, Copy, Github, MapPin, Facebook, Linkedin, Menu, X } from 'lucide-react'
 import { useTheme } from '../lib/theme.provider'
 import Link from 'next/link'
+import Image from 'next/image'
+import { Modal } from '@/components/Modal'
+import { PDFViewer } from '@/components/PDFViewer'
+import myAvatar from '../public/images/my_avatar.jpg'
+import aboutImage from '../public/images/graduation_image.jpg'
+import nexlabLogo from '../public/images/nexlab_logo.png'
+import hrmImage from '../public/images/hrm_image.png'
+import crmImage from '../public/images/crm_image.png'
+import warehouseImage from '../public/images/warehouse_image.avif'
+import ecommerceImage from '../public/images/ecommerce_image.webp'
 
 function Header() {
   const { theme, toggleTheme } = useTheme()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isPDFModalOpen, setIsPDFModalOpen] = useState(false)
 
   useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.classList.add('mobile-menu-open')
+    } else {
+      document.body.classList.remove('mobile-menu-open')
+    }
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsMobileMenuOpen(false)
@@ -19,135 +36,145 @@ function Header() {
     }
 
     document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [])
-
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.classList.remove('mobile-menu-open')
+    }
+  }, [isMobileMenuOpen])
+  
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })
     }
+    setIsMobileMenuOpen(false)
+  }
+
+  const handleCVClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsPDFModalOpen(true)
   }
 
   return (
-    <header className="fixed top-0 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-50">
-      <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
-          {'Logo'}
-        </Link>
-        
-        {/* Mobile menu button */}
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-        >
-          <Menu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-        </button>
-
-        {/* Desktop menu */}
-        <div className="hidden md:flex items-center gap-8">
-          <button
-            onClick={() => scrollToSection('about')}
-            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            About
-          </button>
-          <button
-            onClick={() => scrollToSection('work')}
-            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            Work
-          </button>
-          <button
-            onClick={() => scrollToSection('contact')}
-            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            Contact
-          </button>
+    <>
+      <header className="fixed top-0 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-50">
+        <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
+          <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
+            {'Portfolio'}
+          </Link>
           
+          {/* Mobile menu button */}
           <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
           >
-            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5 text-white" />}
+            <Menu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
           </button>
-          
-          <a
-            href="/cv.pdf"
-            download
-            className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:opacity-90 transition-opacity"
-          >
-            Download CV
-          </a>
-        </div>
 
-        {/* Mobile menu drawer */}
-        {isMobileMenuOpen && (
-          <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 md:hidden">
-            <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white dark:bg-gray-900 p-6 shadow-xl">
-              <div className="flex justify-between items-center mb-8">
-                <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
-                  {'Logo'}
-                </Link>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                >
-                  <X className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-                </button>
-              </div>
-              
-              <div className="flex flex-col gap-4">
-                <button
-                  onClick={() => {
-                    scrollToSection('about')
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className="text-left px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  About
-                </button>
-                <button
-                  onClick={() => {
-                    scrollToSection('work')
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className="text-left px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  Work
-                </button>
-                <button
-                  onClick={() => {
-                    scrollToSection('contact')
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className="text-left px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  Contact
-                </button>
-                
-                <div className="flex items-center gap-4 px-4 py-2">
+          {/* Desktop menu */}
+          <div className="hidden md:flex items-center gap-8">
+            <button
+              onClick={() => scrollToSection('about')}
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              About
+            </button>
+            <button
+              onClick={() => scrollToSection('work')}
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Work
+            </button>
+            <button
+              onClick={() => scrollToSection('contact')}
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Contact
+            </button>
+            
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5 text-white" />}
+            </button>
+            
+            <a
+              href="/pdf_files/CV.pdf"
+              onClick={handleCVClick}
+              className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:opacity-90 transition-opacity"
+            >
+              My Resumé
+            </a>
+          </div>
+
+          {/* Mobile menu drawer */}
+          {isMobileMenuOpen && (
+            <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 md:hidden">
+              <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white dark:bg-gray-900 p-6 shadow-xl transform transition-transform duration-300 ease-in-out translate-x-full mobile-menu-open:translate-x-0">
+                <div className="flex justify-between items-center mb-8">
+                  <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
+                    {'Portfolio'}
+                  </Link>
                   <button
-                    onClick={toggleTheme}
-                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
                   >
-                    {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5 text-white" />}
+                    <X className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+                  </button>
+                </div>
+                
+                <div className="flex flex-col gap-4">
+                  <button
+                    onClick={() => scrollToSection('about')}
+                    className="text-left px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  >
+                    About
+                  </button>
+                  <button
+                    onClick={() => scrollToSection('work')}
+                    className="text-left px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  >
+                    Work
+                  </button>
+                  <button
+                    onClick={() => scrollToSection('contact')}
+                    className="text-left px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  >
+                    Contact
                   </button>
                   
-                  <a
-                    href="/cv.pdf"
-                    download
-                    className="flex-1 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:opacity-90 transition-opacity text-center"
-                  >
-                    Download CV
-                  </a>
+                  <div className="flex items-center gap-4 px-4 py-2">
+                    <button
+                      onClick={toggleTheme}
+                      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5 text-white" />}
+                    </button>
+                    
+                    <a
+                      href="/pdf_files/CV.pdf"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setIsMobileMenuOpen(false)
+                        setIsPDFModalOpen(true)
+                      }}
+                      className="flex-1 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:opacity-90 transition-opacity text-center"
+                    >
+                      My Resumé
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-      </nav>
-    </header>
+          )}
+        </nav>
+      </header>
+
+      <Modal isOpen={isPDFModalOpen} onClose={() => setIsPDFModalOpen(false)}>
+        <PDFViewer file="/pdf_files/CV.pdf" />
+      </Modal>
+    </>
   )
 }
 
@@ -184,7 +211,7 @@ function HeroSection() {
   return (
     <section className="pt-32 pb-20" id="hero">
       <div className="container mx-auto px-6">
-        <div className="flex flex-col lg:flex-row items-center gap-12">
+        <div className="flex flex-col lg:flex-row items-center gap-12 px-12">
           <div className="flex-1 space-y-8">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white">
               Hi, I&apos;m Kha Nguyen{' '}
@@ -192,9 +219,9 @@ function HeroSection() {
             </h1>
             
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl">
-              I&apos;m a Backend developer (Node.js & Golang) with a focus on creating (and occasionally designing)
-              exceptional digital experiences that are fast, accessible, visually appealing, and responsive. Even
-              though I have been creating web applications for over 7 years, I still love it as if it was something new.
+              I&apos;m a Backend developer with a focus on designing and creating the systems and platforms with
+              the high quality of the performance and user experience. Even though I have been creating web applications 
+              for a long time, I still love it as if it was something new.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
@@ -234,10 +261,10 @@ function HeroSection() {
           
           <div className="relative flex-1 max-w-md">
             <div className="relative z-10">
-              <img
-                src="https://scontent.fhan4-6.fna.fbcdn.net/v/t39.30808-6/274468257_1573210059702755_4266780855894831171_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeFj-6aVMmyrpwn9JvgVVvILGHH11NWleDkYcfXU1aV4OUreli6viKg0SL-8c9JQdyopddM43lncaXvJuBXmOW1a&_nc_ohc=Dak2g61Nvu0Q7kNvgEmNAKS&_nc_oc=Adgj3eAOFgLUez3scsmMI8pmIb0-KD0gNLZ0H0so9cOJF2FE6Kc7gmsDVz__F1VAZzE&_nc_zt=23&_nc_ht=scontent.fhan4-6.fna&_nc_gid=AtTOfoGs9tdxci_5D3Ystt5&oh=00_AYCW5rmD566f7M_Jjbzr2lBX2w7u8T9KW6LjU9ARp4OxfQ&oe=677C19FE"
+              <Image
+                src={myAvatar}
                 alt="Profile"
-                className="w-full h-auto rounded-lg shadow-xl"
+                className="w-full h-auto rounded-full shadow-2xl"
               />
             </div>
             <div className="absolute inset-0 translate-x-4 translate-y-4 bg-gray-200 dark:bg-gray-800 rounded-lg -z-10" />
@@ -257,40 +284,38 @@ function AboutSection() {
           </div>
           <div className="grid md:grid-cols-2 gap-12 items-start">
             <div className="relative aspect-[3/4] w-full max-w-md mx-auto">
-              <img
-                src="/profile.jpg"
+              <Image
+                src={aboutImage}
                 alt="Profile"
                 className="rounded-lg object-cover w-full h-full"
               />
             </div>
             <div className="space-y-6">
               <h3 className="text-3xl font-semibold text-gray-900 dark:text-white">
-                Curious about me? Here you have it:
+                Curious about me? Here you have it
               </h3>
               <div className="space-y-4 text-gray-600 dark:text-gray-300">
                 <p>
-                  I&apos;m a passionate self-proclaimed designer who specializes in full stack
-                  development (React.js & Node.js). I am very enthusiastic about bringing the
-                  technical and visual aspects of digital products to life. User experience, pixel
-                  perfect design, and writing clean, readable, highly performant code matters
-                  to me.
+                  I&apos;m a passionate self-proclaimed developer who specializes in web and application
+                  development. I am very enthusiastic about bringing the
+                  technical and visual aspects of digital products to life. User experience, system flexibility,
+                   consistent data and clean, readable, highly performance code matters to me.
                 </p>
                 <p>
-                  I began my journey as a web developer in 2015, and since then, I&apos;ve
+                  I had been a student in University of Information Technology since 2020 and graduated in 2024, and then, I&apos;ve
                   continued to grow and evolve as a developer, taking on new challenges and
-                  learning the latest technologies along the way. Now, in my thirties, 7 years
-                  after starting my web development journey, I&apos;m building cutting-edge web
-                  applications using modern technologies such as Next.js, TypeScript, Node.js,
-                  TailwindCSS, Headless and much more.
+                  learning the latest technologies along the way. Now, in my 20s, after starting 
+                  my web development journey, I&apos;m building cutting-edge web
+                  applications using modern technologies.
                 </p>
                 <p>
-                  I am very much a progressive thinker and enjoy working on products end to
-                  end, from ideation all the way to development.
+                  I always want to learn new things on the daily basis to help me explore the surroundings. I love languages and technologies as well so I try to combine them in daily work and activities.
+                  Meeting new people and having deep conversations attract me a lot and I am firm believer in terms of sharings make us more comprehensive together.
                 </p>
                 <p>
                   When I&apos;m not in full-on developer mode, you can find me hovering around on
-                  twitter or on indie hackers, witnessing the journey of early startups or
-                  enjoying some free time. You can follow me on Twitter where I share tech-related bites and build in public, or you can follow me on GitHub.
+                  other platforms like Facebook, experiencing the wonderful time of some English clubs at the weekend. 
+                  You can follow me with the information in contact section and share tech-related topics or experience in life.
                 </p>
               </div>
               <div className="pt-6">
@@ -301,11 +326,11 @@ function AboutSection() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-gray-600 dark:bg-gray-400" />
-                      <span>B.E. in Computer Engineering</span>
+                      <span>B.E. in Information Technology</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-gray-600 dark:bg-gray-400" />
-                      <span>Full time freelancer</span>
+                      <span>Backend developer</span>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -315,7 +340,7 @@ function AboutSection() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-gray-600 dark:bg-gray-400" />
-                      <span>Aspiring indie hacker</span>
+                      <span>Aspiring Devops Engineer</span>
                     </div>
                   </div>
                 </div>
@@ -388,36 +413,28 @@ function SkillsSection() {
 function ExperienceSection() {
   const experiences = [
     {
-      company: 'Upwork',
-      logo: '/upwork.svg',
-      position: 'Sr. Frontend Developer',
-      period: 'Nov 2021 - Present',
+      company: 'Nexlab Technology',
+      logo: nexlabLogo,
+      position: 'Backend Developer',
+      period: 'October 2023 - Present',
       responsibilities: [
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        'UI ipsum dolor sit et massa semper, id rhoncus leo semper.',
-        'Sed quis lectus ac magna.',
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        'Created multi-platform applications using Golang and NodeJS combining with Hasura GraphQL, delivering high development speed and efficiency',
+        'Enhanced the data retrieval times through effective database management and optimization',
+        'Designed server infrastructure with on-premise and cloud server, reducing server errors by logging and debugging',
+        'Automatically handled the exceptional cases with scripts, ensured the consistency and synchronization of data',
+        'Maintained and refactored features of operated projects',
+        'Contributed to project development with effective backend solutions and best practices'
       ]
     },
     {
-      company: 'Upwork',
-      logo: '/upwork.svg',
-      position: 'Team Lead',
-      period: 'Jul 2017 - Oct 2021',
+      company: 'Nexlab Technology',
+      logo: nexlabLogo,
+      position: 'Backend Intern',
+      period: 'Jul 2024 - Oct 2024',
       responsibilities: [
-        'Sed quis lectus ac magna.',
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        'Sed quis lectus ac magna.',
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-      ]
-    },
-    {
-      company: 'Upwork',
-      logo: '/upwork.svg',
-      position: 'Full Stack Developer',
-      period: 'Dec 2015 - May 2017',
-      responsibilities: [
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        'Got familiar with the new technologies, fast-paced development process, business culture',
+        'Developed and released the new features for portal and application products',
+        'Engaged in training sections and delivered presentation',
       ]
     }
   ]
@@ -439,7 +456,7 @@ function ExperienceSection() {
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start gap-6">
-                  <img
+                  <Image
                     src={exp.logo}
                     alt={exp.company}
                     className="w-16 h-16 object-contain"
@@ -472,6 +489,124 @@ function ExperienceSection() {
   )
 }
 
+function FieldsSection() {
+  const skills = [
+    { name: 'CRM', icon: crmImage },
+    { name: 'Warehouses', icon: warehouseImage },
+    { name: 'HRM', icon: hrmImage },
+    { name: 'E-Commerce', icon: ecommerceImage },
+  ]
+
+  // Duplicate the skills array to create a seamless loop
+  const duplicatedSkills = [...skills, ...skills]
+
+  return (
+    <section className="py-20 overflow-hidden" id="skills">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-xl text-gray-600 dark:text-gray-400 tracking-wider mb-1">
+            Fields
+          </h2>
+          <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
+            The fields in which I have much experiences
+          </h3>
+        </div>
+
+        <div className="relative">
+          {/* First row - moving right to left */}
+          <div className="flex space-x-8 animate-scroll-left py-4">
+            {duplicatedSkills.map((skill, index) => (
+              <div
+                key={`${skill.name}-${index}`}
+                className="flex-none w-48 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg transform transition-transform hover:scale-105"
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  <Image
+                    src={skill.icon}
+                    alt={`${skill.name} icon`}
+                    className="w-16 h-16 object-contain"
+                  />
+                  <span className="text-gray-900 dark:text-white font-medium">
+                    {skill.name}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CertificatesSection() {
+  const certificates = [
+    {
+      id: "toeic-cert",
+      title: "Test of English for International Communication",
+      issuer: "IIG Vietnam",
+      date: "Issued Mar 2024 · Expires Mar 2026",
+      description: "Overall: 800",
+      image: "https://duhocglolink.com/wp-content/uploads/2019/05/luyen-thi-toeic-philippines-du-hoc-glolink-1.png",
+    },
+    {
+      id: "ielts-cert",
+      title: "International English Language Testing System",
+      issuer: "IDP IELTS",
+      date: "Issued Nov 2024 · Expires Nov 2026",
+      description: "Overall: 6.5",
+      image: "https://face.edu.vn/wp-content/uploads/2015/10/IELTS-logo.jpg",
+    }
+  ]
+
+  return (
+    <FadeInSection>
+      <section className="py-20 bg-gray-50 dark:bg-gray-800" id="certificates">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-xl text-gray-600 dark:text-gray-400 tracking-wider mb-1">
+              Certificates
+            </h2>
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
+              English Certifications
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {certificates.map((cert) => (
+              <div 
+                key={cert.id} 
+                className="bg-white dark:bg-gray-700 rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row transition-transform duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl"
+              >
+                <div className="md:w-2/5">
+                  <img
+                    src={cert.image}
+                    alt={`${cert.title} Certificate`}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+                <div className="p-6 md:w-3/5">
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    {cert.title}
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                    {cert.issuer}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                    {cert.date}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    {cert.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </FadeInSection>
+  )
+}
 
 function ProjectsSection() {
   const projects = [
@@ -698,9 +833,15 @@ export default function Home() {
         <ExperienceSection />
       </section>
       <section className="bg-white dark:bg-gray-900">
-        <ProjectsSection />
+        <FieldsSection />
       </section>
-      <section id="contact" className="bg-gray-50 dark:bg-gray-800">
+      {/* <section className="bg-white dark:bg-gray-900">
+        <ProjectsSection />
+      </section> */}
+      <section className="bg-gray-50 dark:bg-gray-800">
+        <CertificatesSection />
+      </section>
+      <section id="contact" className="bg-white dark:bg-gray-900">
         <ContactSection />
       </section>
       <Footer />

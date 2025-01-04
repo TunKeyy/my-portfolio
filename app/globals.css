@@ -16,3 +16,93 @@
   transform-origin: 70% 70%;
 }
 
+.mobile-menu-open .transform {
+  transform: translateX(0);
+}
+
+body {
+  @apply overflow-x-hidden;
+}
+
+body.mobile-menu-open {
+  @apply overflow-hidden;
+}
+
+/* PDF Viewer styles */
+.react-pdf__Document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.react-pdf__Page {
+  max-width: 100%;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  margin-bottom: 1rem;
+}
+
+.react-pdf__Page canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+.pdf-viewer {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.pdf-viewer .react-pdf__Document {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.pdf-viewer .react-pdf__Page {
+  display: inline-block;
+  margin-right: 1rem;
+}
+
+/* Modal animation */
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-overlay {
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-50% - 1rem)); /* Adjust based on gap */
+  }
+}
+
+@keyframes scroll-right {
+  0% {
+    transform: translateX(calc(-50% - 1rem)); /* Adjust based on gap */
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 30s linear infinite;
+}
+
+.animate-scroll-right {
+  animation: scroll-right 30s linear infinite;
+}
+
+/* Add this to your existing hover styles */
+.animate-scroll-left:hover,
+.animate-scroll-right:hover {
+  animation-play-state: paused;
+}
