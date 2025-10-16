@@ -3,6 +3,8 @@ import hrmImage from '../public/images/hrm_image.png'
 import crmImage from '../public/images/crm_image.png'
 import warehouseImage from '../public/images/warehouse_image.avif'
 import ecommerceImage from '../public/images/ecommerce_image.webp'
+import socialMediaImage from '../public/images/social_media_image.png'
+import iotImage from '../public/images/iot_image.png'
 
 export function FieldsSection() {
   const skills = [
@@ -10,6 +12,8 @@ export function FieldsSection() {
     { name: 'Warehouses', icon: warehouseImage },
     { name: 'HRM', icon: hrmImage },
     { name: 'E-Commerce', icon: ecommerceImage },
+    { name: 'Social Media', icon: socialMediaImage },
+    { name: 'IOT', icon: iotImage },
   ]
 
   // Duplicate the skills array to create a seamless loop
