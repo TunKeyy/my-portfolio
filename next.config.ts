@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Turbopack config (used by `next dev --turbopack`)
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        canvas: './empty-module.ts',
+      },
+    },
+  },
   webpack: (config, { isServer }) => {
     // Handle canvas dependency for PDF libraries
     if (!isServer) {

@@ -16,16 +16,66 @@
   transform-origin: 70% 70%;
 }
 
-.mobile-menu-open .transform {
-  transform: translateX(0);
-}
-
 body {
   @apply overflow-x-hidden;
+  margin: 0;
+  padding: 0;
 }
 
-body.mobile-menu-open {
-  @apply overflow-hidden;
+/* ===== Desktop OS Styles ===== */
+
+.desktop-wallpaper {
+  background:
+    radial-gradient(ellipse at 15% 25%, rgba(88, 28, 135, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 75%, rgba(29, 78, 216, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(76, 29, 149, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse at 30% 80%, rgba(6, 95, 70, 0.08) 0%, transparent 40%),
+    #0a0a12;
+}
+
+.light .desktop-wallpaper,
+html.light .desktop-wallpaper,
+.desktop-wallpaper-light {
+  background:
+    radial-gradient(ellipse at 15% 25%, rgba(147, 51, 234, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 75%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 30% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
+    #e8e0f0;
+}
+
+/* Custom scrollbar for windows */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.light .custom-scrollbar::-webkit-scrollbar-thumb,
+html.light .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.light .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+html.light .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+/* Prevent text selection on desktop elements */
+.select-none {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* PDF Viewer styles */
@@ -61,48 +111,25 @@ body.mobile-menu-open {
   margin-right: 1rem;
 }
 
-/* Modal animation */
-@keyframes modalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* ===== Responsive Tweaks ===== */
 
-.modal-overlay {
-  animation: modalFadeIn 0.3s ease-out;
-}
-
-.modal-content {
-  animation: modalFadeIn 0.3s ease-out;
-}
-
-@keyframes scroll-left {
-  0% {
-    transform: translateX(0);
+/* Touch-friendly tap targets on mobile */
+@media (max-width: 767px) {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
   }
-  100% {
-    transform: translateX(calc(-50% - 1rem)); /* Adjust based on gap */
+
+  /* Ensure smooth scrolling on iOS */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
   }
 }
 
-@keyframes scroll-right {
-  0% {
-    transform: translateX(calc(-50% - 1rem)); /* Adjust based on gap */
+/* Safe area insets for modern devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  @media (max-width: 767px) {
+    .safe-bottom {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
   }
-  100% {
-    transform: translateX(0);
-  }
-}
-
-.animate-scroll-left {
-  animation: scroll-left 30s linear infinite;
-}
-
-.animate-scroll-right {
-  animation: scroll-right 30s linear infinite;
-}
-
-/* Add this to your existing hover styles */
-.animate-scroll-left:hover,
-.animate-scroll-right:hover {
-  animation-play-state: paused;
 }
