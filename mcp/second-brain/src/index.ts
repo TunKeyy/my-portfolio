@@ -1,5 +1,10 @@
 #!/usr/bin/env node
-import 'dotenv/config'
+import { config } from 'dotenv'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+// Load THIS package's .env regardless of the launcher's cwd (Claude Code runs us from elsewhere).
+// quiet: stdout must stay pure JSON-RPC for the stdio transport — no dotenv banner.
+config({ path: join(dirname(fileURLToPath(import.meta.url)), '../.env'), quiet: true })
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { createServiceClient, scrubError } from './supabase'

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   buildGraphData,
+  CENTER_ID,
   currentFocus,
   fetchChildren,
   fetchNode,
@@ -62,20 +63,24 @@ describe('currentFocus', () => {
 })
 
 describe('buildGraphData', () => {
-  it('roots view: roots as nodes, no links', () => {
+  it('roots view: yellow centre hub + roots, links hub->root', () => {
     const g = buildGraphData(null, [], [node('a'), node('b')])
-    expect(g.nodes.map((n) => n.id)).toEqual(['a', 'b'])
-    expect(g.nodes.every((n) => n.kind === 'root')).toBe(true)
-    expect(g.links).toEqual([])
+    expect(g.nodes[0]).toMatchObject({ id: CENTER_ID, kind: 'core', name: '' })
+    expect(g.nodes.slice(1).map((n) => n.id)).toEqual(['a', 'b'])
+    expect(g.nodes.slice(1).every((n) => n.kind === 'root')).toBe(true)
+    expect(g.links).toEqual([
+      { source: CENTER_ID, target: 'a' },
+      { source: CENTER_ID, target: 'b' },
+    ])
   })
 
-  it('focus view: core + children, links from core', () => {
+  it('focus view: centre hub + children, links hub->child', () => {
     const g = buildGraphData(node('a'), [node('b', 'a'), node('c', 'a')], [])
-    expect(g.nodes[0].kind).toBe('core')
+    expect(g.nodes[0]).toMatchObject({ id: CENTER_ID, kind: 'core' })
     expect(g.nodes.slice(1).every((n) => n.kind === 'child')).toBe(true)
     expect(g.links).toEqual([
-      { source: 'a', target: 'b' },
-      { source: 'a', target: 'c' },
+      { source: CENTER_ID, target: 'b' },
+      { source: CENTER_ID, target: 'c' },
     ])
   })
 })

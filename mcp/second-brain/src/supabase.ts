@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import ws from 'ws'
 
 // Service-role client (bypasses RLS). Credentials come ONLY from the MCP process env.
 export function createServiceClient(): SupabaseClient {
@@ -8,7 +9,12 @@ export function createServiceClient(): SupabaseClient {
   if (!url || !key) {
     throw new Error('MCP env not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)')
   }
-  return createClient(url, key, { auth: { persistSession: false } })
+  return createClient(url, key, {
+    auth: { persistSession: false },
+    // Node < 22 has no native WebSocket; supabase-js inits Realtime eagerly. We only do REST
+    // queries, but it still needs a constructor — supply `ws`.
+    realtime: { transport: ws as unknown as typeof WebSocket },
+  })
 }
 
 // Strip anything resembling a URL/token/key from any message before it can reach stderr or the model.

@@ -173,7 +173,7 @@ export function MobileLayout({ apps, renderContent }: MobileLayoutProps) {
               className={`fixed bottom-4 left-4 right-4 flex items-center justify-evenly py-3 rounded-3xl backdrop-blur-2xl ${
                 isLight
                   ? 'bg-white/50 border border-black/5'
-                  : 'bg-white/10 border border-white/10'
+                  : 'bg-black/30 border border-white/10'
               }`}
             >
               {apps.slice(0, 4).map((app) => (

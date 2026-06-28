@@ -12,12 +12,22 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark')
+  // Initialise from the class the pre-paint script (in layout) already set, so React agrees with
+  // what the user sees — no flash, and the choice persists.
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof document === 'undefined') return 'dark'
+    return document.documentElement.classList.contains('light') ? 'light' : 'dark'
+  })
 
   useEffect(() => {
     const root = window.document.documentElement
     root.classList.remove('light', 'dark')
     root.classList.add(theme)
+    try {
+      localStorage.setItem('theme', theme)
+    } catch {
+      /* storage unavailable */
+    }
   }, [theme])
 
   const toggleTheme = () => {

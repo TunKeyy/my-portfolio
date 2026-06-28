@@ -45,10 +45,10 @@ export function NodeList({
           <li key={n.id}>
             <button
               type="button"
-              onClick={() => onDive(n.node)}
+              onClick={() => n.node && onDive(n.node)}
               style={{ ['--sb-node-color' as string]: n.color }}
             >
-              {n.node.icon ? `${n.node.icon} ` : ''}
+              {n.node?.icon ? `${n.node.icon} ` : ''}
               {n.name}
             </button>
           </li>

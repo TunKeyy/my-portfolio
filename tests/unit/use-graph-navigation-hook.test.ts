@@ -52,10 +52,11 @@ describe('useGraphNavigation hook', () => {
   })
   afterEach(() => vi.unstubAllGlobals())
 
-  it('renders roots initially', () => {
+  it('renders roots initially (around the centre hub)', () => {
     stubFetch([])
     const { result } = renderHook(() => useGraphNavigation(roots))
-    expect(result.current.graph.nodes.map((n) => n.id)).toEqual(['a', 'b'])
+    const orbit = result.current.graph.nodes.filter((n) => n.kind !== 'core')
+    expect(orbit.map((n) => n.id)).toEqual(['a', 'b'])
     expect(result.current.focus).toBeNull()
   })
 
@@ -88,7 +89,8 @@ describe('useGraphNavigation hook', () => {
     stubFetch([{ match: /\/nodes\/missing$/, ok: false, status: 404 }])
     const { result } = renderHook(() => useGraphNavigation(roots))
     await waitFor(() => expect(result.current.focus).toBeNull())
-    expect(result.current.graph.nodes.map((n) => n.id)).toEqual(['a', 'b'])
+    const orbit = result.current.graph.nodes.filter((n) => n.kind !== 'core')
+    expect(orbit.map((n) => n.id)).toEqual(['a', 'b'])
   })
 
   it('valid ?node= deep link focuses that node', async () => {

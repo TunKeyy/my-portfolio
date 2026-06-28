@@ -7,11 +7,9 @@ import { motion } from 'framer-motion'
 import {
   Github,
   MapPin,
-  Facebook,
   Linkedin,
   Copy,
   Mail,
-  Phone,
   User,
   BookOpen,
   Zap,
@@ -19,8 +17,6 @@ import {
   FolderOpen,
   Trophy,
   MessageCircle,
-  FileText,
-  BookMarked,
   Brain,
 } from 'lucide-react'
 import { AppIcon } from './app-icon'
@@ -31,7 +27,6 @@ import { Window } from './Window'
 import { Dock, DockItem } from './Dock'
 import { MobileLayout } from './MobileLayout'
 import { TabletLayout } from './TabletLayout'
-import { PDFViewer } from '../PDFViewer'
 import { useTheme } from '../../lib/theme.provider'
 import { useDeviceType } from '../../hooks/useDeviceType'
 
@@ -48,16 +43,14 @@ import iotImage from '../../public/images/iot_image.png'
 
 // ===== App Configuration =====
 const APPS = [
-  { id: 'profile', title: 'Profile', icon: '👤', glyph: User, gradient: 'from-blue-400 to-blue-600', w: 640, h: 480, x: 120, y: 60 },
+  { id: 'profile', title: 'Profile', icon: '👤', glyph: User, gradient: 'from-sky-400 to-blue-600', w: 640, h: 480, x: 120, y: 60 },
   { id: 'about', title: 'About Me', icon: '📖', glyph: BookOpen, gradient: 'from-pink-400 to-rose-500', w: 780, h: 560, x: 180, y: 80 },
   { id: 'skills', title: 'Skills', icon: '⚡', glyph: Zap, gradient: 'from-yellow-400 to-amber-500', w: 720, h: 560, x: 240, y: 70 },
-  { id: 'experience', title: 'Experience', icon: '💼', glyph: Briefcase, gradient: 'from-amber-700 to-stone-700', w: 760, h: 540, x: 200, y: 90 },
-  { id: 'fields', title: 'Fields', icon: '📂', glyph: FolderOpen, gradient: 'from-sky-300 to-sky-500', w: 680, h: 480, x: 280, y: 100 },
+  { id: 'experience', title: 'Experience', icon: '💼', glyph: Briefcase, gradient: 'from-orange-400 to-amber-600', w: 760, h: 540, x: 200, y: 90 },
+  { id: 'fields', title: 'Fields', icon: '📂', glyph: FolderOpen, gradient: 'from-cyan-400 to-sky-600', w: 680, h: 480, x: 280, y: 100 },
   { id: 'certificates', title: 'Certificates', icon: '🏆', glyph: Trophy, gradient: 'from-amber-300 to-orange-500', w: 640, h: 420, x: 260, y: 85 },
-  { id: 'contact', title: 'Contact', icon: '💬', glyph: MessageCircle, gradient: 'from-emerald-400 to-green-600', w: 520, h: 480, x: 320, y: 110 },
-  { id: 'resume', title: 'Resume', icon: '📄', glyph: FileText, gradient: 'from-slate-400 to-slate-600', w: 800, h: 650, x: 160, y: 55 },
-  { id: 'docs', title: 'Docs', icon: '📚', glyph: BookMarked, gradient: 'from-indigo-400 to-violet-600', w: 0, h: 0, x: 0, y: 0, href: '/docs' },
-  { id: 'second-brain', title: 'Second Brain', icon: '🧠', glyph: Brain, gradient: 'from-purple-400 to-indigo-600', w: 0, h: 0, x: 0, y: 0, href: '/second-brain' },
+  { id: 'contact', title: 'Contact', icon: '💬', glyph: MessageCircle, gradient: 'from-emerald-400 to-teal-600', w: 520, h: 480, x: 320, y: 110 },
+  { id: 'second-brain', title: 'Second Brain', icon: '🧠', glyph: Brain, gradient: 'from-fuchsia-400 to-purple-600', w: 0, h: 0, x: 0, y: 0, href: '/second-brain' },
 ]
 
 const DOCK_ITEMS: DockItem[] = APPS.map((a) => ({
@@ -111,14 +104,6 @@ function ProfileContent() {
           className={`p-2.5 rounded-xl transition-colors ${isLight ? 'bg-black/5 hover:bg-black/10' : 'bg-white/5 hover:bg-white/10'}`}
         >
           <Github className={`w-5 h-5 ${isLight ? 'text-gray-700' : 'text-gray-300'}`} />
-        </a>
-        <a
-          href="https://www.facebook.com/kha.nguyentuan.73/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`p-2.5 rounded-xl transition-colors ${isLight ? 'bg-black/5 hover:bg-black/10' : 'bg-white/5 hover:bg-white/10'}`}
-        >
-          <Facebook className={`w-5 h-5 ${isLight ? 'text-gray-700' : 'text-gray-300'}`} />
         </a>
         <a
           href="https://www.linkedin.com/in/kha-nguyen-tuan/"
@@ -505,28 +490,6 @@ function ContactContent() {
             )}
           </button>
         </div>
-
-        <div className={`flex items-center justify-between rounded-xl px-3 sm:px-4 py-3 border ${isLight ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/5'}`}>
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Phone className="w-4 h-4 text-blue-500 shrink-0" />
-            <a
-              href="tel:+84375627330"
-              className={`text-sm transition-colors ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-300 hover:text-white'}`}
-            >
-              +84 375627330
-            </a>
-          </div>
-          <button
-            onClick={() => copy('+84375627330', 'phone')}
-            className={`transition-colors ${isLight ? 'text-gray-400 hover:text-gray-700' : 'text-gray-500 hover:text-white'}`}
-          >
-            {copied === 'phone' ? (
-              <span className="text-xs text-green-500">Copied!</span>
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
-          </button>
-        </div>
       </div>
 
       <p className="text-gray-500 text-xs mt-6 mb-3">
@@ -549,23 +512,7 @@ function ContactContent() {
         >
           <Linkedin className={`w-5 h-5 ${isLight ? 'text-gray-700' : 'text-gray-300'}`} />
         </a>
-        <a
-          href="https://www.facebook.com/kha.nguyentuan.73/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`p-2.5 rounded-xl transition-colors ${isLight ? 'bg-black/5 hover:bg-black/10' : 'bg-white/5 hover:bg-white/10'}`}
-        >
-          <Facebook className={`w-5 h-5 ${isLight ? 'text-gray-700' : 'text-gray-300'}`} />
-        </a>
       </div>
-    </div>
-  )
-}
-
-function ResumeContent() {
-  return (
-    <div className="h-full">
-      <PDFViewer file="/pdf_files/CV.pdf" />
     </div>
   )
 }
@@ -588,8 +535,6 @@ function WindowContent({ id }: { id: string }) {
       return <CertificatesContent />
     case 'contact':
       return <ContactContent />
-    case 'resume':
-      return <ResumeContent />
     default:
       return null
   }
@@ -724,8 +669,9 @@ function DesktopInner() {
     >
       <MenuBar />
 
-      {/* Desktop Icons - right column (macOS style) */}
-      <div className="absolute top-9 right-3 flex flex-col gap-1 pt-1">
+      {/* Desktop Icons (macOS style). Column-flow grid capped at 5 rows: extra icons spill into a
+          second column instead of being clipped off-screen on short viewports. */}
+      <div className="absolute top-9 right-3 z-10 grid grid-flow-col grid-rows-5 gap-1 pt-1">
         {APPS.map((app) => (
           <DesktopIcon
             key={app.id}

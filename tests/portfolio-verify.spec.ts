@@ -6,7 +6,7 @@ test.describe('Phase 1 — Icon system', () => {
   test('dock renders gradient tiles (no emoji)', async ({ page }) => {
     await page.goto(BASE)
     await page.waitForLoadState('networkidle')
-    const tiles = page.locator('[class*="rounded-2xl"][class*="bg-gradient-to-br"]')
+    const tiles = page.locator('[class*="overflow-hidden"][class*="bg-gradient-to-b"]')
     await expect(tiles.first()).toBeVisible()
     expect(await tiles.count()).toBeGreaterThanOrEqual(8)
   })

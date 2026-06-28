@@ -119,7 +119,7 @@ function TabletDock({
         className={`flex items-end gap-2 px-4 py-2.5 backdrop-blur-2xl rounded-2xl shadow-2xl ${
           isLight
             ? 'bg-white/60 border border-black/10 shadow-black/10'
-            : 'bg-white/10 border border-white/20 shadow-black/40'
+            : 'bg-black/30 border border-white/10 shadow-black/50'
         }`}
       >
         {apps.map((item) => {
@@ -226,8 +226,8 @@ export function TabletLayout({ apps, renderContent }: TabletLayoutProps) {
         onToggleTheme={toggleTheme}
       />
 
-      {/* Desktop Icons Grid */}
-      <div className="absolute top-10 right-4 flex flex-col gap-1 pt-2">
+      {/* Icons — column-flow grid (max 5 rows) so nothing is clipped on short screens. */}
+      <div className="absolute top-10 right-4 z-10 grid grid-flow-col grid-rows-5 gap-1 pt-2">
         {apps.map((app) => (
           <button
             key={app.id}

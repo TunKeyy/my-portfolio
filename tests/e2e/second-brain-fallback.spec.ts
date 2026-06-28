@@ -10,9 +10,9 @@ test('list fallback renders the full node data', async ({ page }) => {
   await page.goto(`${BASE}/second-brain`)
   await page.waitForLoadState('networkidle')
 
-  const list = page.locator('.sb-sr-list')
+  const list = page.locator('nav[aria-label="Knowledge graph navigation"]')
   await expect(list).toHaveCount(1)
-  for (const name of ['Software Engineering', 'Music Learning', 'English Learning']) {
-    await expect(list.getByRole('button', { name: new RegExp(name) })).toBeAttached()
-  }
+  // Seeded "Software Engineering" is stable; the list must render the roots.
+  await expect(list.getByRole('button', { name: /Software Engineering/ })).toBeAttached()
+  expect(await list.locator('button').count()).toBeGreaterThanOrEqual(3)
 })

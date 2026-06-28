@@ -15,7 +15,8 @@ type GraphState =
   | { status: 'ready'; Comp: GraphComp }
 
 // Fall back to the list if the graph chunk fails OR hangs (a stuck import is also a dead page).
-const GRAPH_LOAD_TIMEOUT_MS = 6000
+// Generous so a slow first-load / cold compile doesn't prematurely drop to the list.
+const GRAPH_LOAD_TIMEOUT_MS = 12000
 
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -29,6 +30,8 @@ interface ConstellationProps {
 export function Constellation({ roots, onOpenNode }: ConstellationProps) {
   const { graph, focus, focusDocCount, loading, dive, ascend } = useGraphNavigation(roots, onOpenNode)
   const containerRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fgRef = useRef<any>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
   const [graphState, setGraphState] = useState<GraphState>({ status: 'loading' })
   const reduced = prefersReducedMotion()
@@ -68,6 +71,41 @@ export function Constellation({ roots, onOpenNode }: ConstellationProps) {
     return () => ro.disconnect()
   }, [])
 
+  // Keep nodes gently drifting (perpetual, subtle) unless reduced-motion is requested, and frame
+  // the level so every node is on-screen (critical on small/mobile canvases).
+  useEffect(() => {
+    const fg = fgRef.current
+    if (!fg || graphState.status !== 'ready') return
+    if (!reduced) {
+      fg.d3Force?.('jitter', makeJitterForce())
+      fg.d3ReheatSimulation?.()
+    }
+    const t = setTimeout(() => fgRef.current?.zoomToFit?.(600, 70), 500)
+    return () => clearTimeout(t)
+    // key on the level (focus id), not the `graph` object — it changes identity every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduced, graphState.status, focus?.id])
+
+  // Pause the (perpetual) simulation while the tab is hidden so it doesn't burn CPU/battery.
+  useEffect(() => {
+    if (reduced) return
+    const onVis = () => {
+      const fg = fgRef.current
+      if (!fg) return
+      if (document.hidden) fg.pauseAnimation?.()
+      else fg.resumeAnimation?.()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [reduced])
+
+  // Re-frame on viewport / orientation change so nodes never end up off-canvas.
+  useEffect(() => {
+    if (graphState.status !== 'ready' || size.w === 0) return
+    const t = setTimeout(() => fgRef.current?.zoomToFit?.(400, 70), 200)
+    return () => clearTimeout(t)
+  }, [size.w, size.h, graphState.status])
+
   const nodeListProps = { graph, focus, focusDocCount, onDive: dive, onAscend: ascend, onOpenNode }
 
   // Chunk failed to load -> render the list view instead of a dead page.
@@ -102,21 +140,26 @@ export function Constellation({ roots, onOpenNode }: ConstellationProps) {
       )}
       {Graph && size.w > 0 && (
         <Graph
+          ref={fgRef}
           width={size.w}
           height={size.h}
           graphData={graph}
           backgroundColor="rgba(0,0,0,0)"
           nodeRelSize={6}
           nodeLabel={(n: object) => (n as GraphVizNode).name}
-          linkColor={() => 'rgba(148,163,184,0.35)'}
+          linkColor={() => 'rgba(250,204,21,0.35)'}
+          linkWidth={1}
           linkDirectionalParticles={reduced ? 0 : 2}
           linkDirectionalParticleWidth={2}
           enableNodeDrag={!reduced}
-          cooldownTime={reduced ? 0 : 4000}
+          cooldownTime={reduced ? 0 : Infinity}
+          d3AlphaDecay={reduced ? 0.0228 : 0}
+          d3VelocityDecay={0.35}
+          warmupTicks={30}
           onNodeClick={(n: object) => {
             const node = n as GraphVizNode
             if (node.kind === 'core') ascend()
-            else dive(node.node)
+            else if (node.node) dive(node.node)
           }}
           nodeCanvasObject={(n: object, ctx: CanvasRenderingContext2D, scale: number) =>
             paintNode(n as GraphVizNode & { x?: number; y?: number }, ctx, scale)
@@ -146,7 +189,25 @@ function paintNode(
 ) {
   const x = n.x ?? 0
   const y = n.y ?? 0
-  const r = n.kind === 'core' ? 10 : 6
+
+  // Centre hub: small, yellow, no label (it's the "back" control).
+  if (n.kind === 'core') {
+    const r = 4
+    const glow = ctx.createRadialGradient(x, y, 1, x, y, r * 3)
+    glow.addColorStop(0, n.color)
+    glow.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = glow
+    ctx.beginPath()
+    ctx.arc(x, y, r * 3, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.fillStyle = n.color
+    ctx.beginPath()
+    ctx.arc(x, y, r, 0, 2 * Math.PI)
+    ctx.fill()
+    return
+  }
+
+  const r = 6
   const grad = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.4)
   grad.addColorStop(0, n.color)
   grad.addColorStop(1, 'rgba(0,0,0,0)')
@@ -158,10 +219,32 @@ function paintNode(
   ctx.beginPath()
   ctx.arc(x, y, r, 0, 2 * Math.PI)
   ctx.fill()
-  const fontSize = Math.max(10, 12 / scale)
+  const fontSize = Math.max(9, 11 / scale)
   ctx.font = `${fontSize}px ui-sans-serif, system-ui, sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
   ctx.fillStyle = 'rgba(226,232,240,0.95)'
-  ctx.fillText(n.name, x, y + r + 2)
+  const label = n.name.length > 18 ? `${n.name.slice(0, 17)}…` : n.name
+  ctx.fillText(label, x, y + r + 2)
+}
+
+// d3 force: tiny random velocity each tick so nodes keep drifting slightly, with a hard velocity
+// clamp so motion can never accumulate and fling nodes off-screen.
+type SimNode = { vx?: number; vy?: number }
+const MAX_VELOCITY = 1.2
+function makeJitterForce() {
+  let nodes: SimNode[] = []
+  const force = (alpha: number) => {
+    const k = 0.25 * alpha
+    for (const node of nodes) {
+      const vx = (node.vx ?? 0) + (Math.random() - 0.5) * k
+      const vy = (node.vy ?? 0) + (Math.random() - 0.5) * k
+      node.vx = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, vx))
+      node.vy = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, vy))
+    }
+  }
+  force.initialize = (n: SimNode[]) => {
+    nodes = n
+  }
+  return force
 }

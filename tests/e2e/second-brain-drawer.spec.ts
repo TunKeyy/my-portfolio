@@ -31,7 +31,10 @@ test('leaf opens drawer; stored XSS does not execute; Esc closes', async ({ page
   await page.waitForLoadState('networkidle')
 
   // Click a (childless) root via the accessible list -> onOpenNode -> drawer.
-  await page.locator('.sb-sr-list').getByRole('button', { name: /English Learning/ }).dispatchEvent('click')
+  await page
+    .locator('nav[aria-label="Knowledge graph navigation"]')
+    .getByRole('button', { name: /English Learning/ })
+    .dispatchEvent('click')
 
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()

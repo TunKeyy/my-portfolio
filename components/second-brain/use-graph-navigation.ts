@@ -6,12 +6,16 @@ import type { SecondBrainDocument, SecondBrainNode } from '@/lib/second-brain/ty
 
 const DEFAULT_COLOR = '#8b5cf6'
 
+// Synthetic hub at the centre of every level: small, yellow, textless. Clicking it ascends.
+export const CENTER_ID = '__center__'
+const CENTER_COLOR = '#facc15'
+
 export interface GraphVizNode {
   id: string
   name: string
   color: string
   kind: 'root' | 'core' | 'child'
-  node: SecondBrainNode
+  node: SecondBrainNode | null // null for the synthetic centre hub
 }
 export interface GraphVizLink {
   source: string
@@ -56,17 +60,19 @@ function toViz(n: SecondBrainNode, kind: GraphVizNode['kind']): GraphVizNode {
   return { id: n.id, name: n.title, color: n.color ?? DEFAULT_COLOR, kind, node: n }
 }
 
+// Every level is a star: a textless yellow centre hub (ascend) with the level's nodes orbiting it,
+// each joined to the hub by a link. At roots the orbit is the roots; when focused it's the children.
 export function buildGraphData(
   focus: SecondBrainNode | null,
   children: SecondBrainNode[],
   roots: SecondBrainNode[]
 ): GraphData {
-  if (!focus) {
-    return { nodes: roots.map((n) => toViz(n, 'root')), links: [] }
-  }
+  const orbit = focus ? children : roots
+  const kind: GraphVizNode['kind'] = focus ? 'child' : 'root'
+  const center: GraphVizNode = { id: CENTER_ID, name: '', color: CENTER_COLOR, kind: 'core', node: null }
   return {
-    nodes: [toViz(focus, 'core'), ...children.map((c) => toViz(c, 'child'))],
-    links: children.map((c) => ({ source: focus.id, target: c.id })),
+    nodes: [center, ...orbit.map((n) => toViz(n, kind))],
+    links: orbit.map((n) => ({ source: CENTER_ID, target: n.id })),
   }
 }
 

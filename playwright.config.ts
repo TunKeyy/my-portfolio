@@ -7,6 +7,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
     headless: true,
+    // Sent only if /second-brain challenges with 401 (i.e. when SECOND_BRAIN_PASSWORD is set).
+    httpCredentials: { username: 'sb', password: process.env.SECOND_BRAIN_PASSWORD || '' },
   },
   webServer: {
     command: 'npm run dev',

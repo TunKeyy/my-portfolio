@@ -24,9 +24,20 @@ body {
 
 /* ===== Desktop OS Styles ===== */
 
+/* Base canvas colour per theme so there's never a white flash before the wallpaper paints. */
+html.dark,
+html.dark body {
+  background-color: #0a0a14;
+}
+html.light,
+html.light body {
+  background-color: #eef1fb;
+}
+
 .desktop-wallpaper {
-  position: relative;
-  overflow: hidden;
+  /* NB: do NOT set position/overflow here — the element already carries Tailwind `fixed inset-0
+     overflow-hidden`. A `position: relative` here overrode `fixed`, collapsing the box to ~0px and
+     clipping the absolutely-positioned desktop icon column (icons vanished in dark mode). */
   background:
     radial-gradient(ellipse 60% 50% at 20% 25%, rgba(99,102,241,0.28) 0%, transparent 60%),
     radial-gradient(ellipse 50% 40% at 80% 70%, rgba(20,184,166,0.22) 0%, transparent 60%),
@@ -34,14 +45,15 @@ body {
     #0a0a14;
 }
 
+/* Light wallpaper mirrors the dark hue family (indigo / teal / purple) in soft tints for cohesion. */
 .light .desktop-wallpaper,
 html.light .desktop-wallpaper,
 .desktop-wallpaper-light {
   background:
-    radial-gradient(ellipse 60% 50% at 20% 25%, rgba(196,181,253,0.45) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 80% 70%, rgba(254,202,202,0.40) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 35% at 50% 90%, rgba(186,230,253,0.35) 0%, transparent 60%),
-    #f3eef7;
+    radial-gradient(ellipse 60% 50% at 20% 25%, rgba(129,140,248,0.34) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 70%, rgba(45,212,191,0.24) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 35% at 50% 90%, rgba(192,132,252,0.24) 0%, transparent 60%),
+    #eef1fb;
 }
 
 /* Aurora blob overlay */

@@ -47,7 +47,7 @@ export function Dock({ items }: DockProps) {
       <div className={`flex items-end gap-1 px-3 py-2 backdrop-blur-2xl rounded-2xl shadow-2xl ${
         isLight
           ? 'bg-white/60 border border-black/10 shadow-black/10'
-          : 'bg-white/10 border border-white/20 shadow-black/40'
+          : 'bg-black/30 border border-white/10 shadow-black/50'
       }`}>
         {items.map((item) => {
           const state = windowStates[item.id]
