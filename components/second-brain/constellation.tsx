@@ -154,7 +154,7 @@ export function Constellation({ roots, onOpenNode }: ConstellationProps) {
           enableNodeDrag={!reduced}
           cooldownTime={reduced ? 0 : Infinity}
           d3AlphaDecay={reduced ? 0.0228 : 0}
-          d3VelocityDecay={0.5}
+          d3VelocityDecay={0.4}
           warmupTicks={30}
           onNodeClick={(n: object) => {
             const node = n as GraphVizNode
@@ -219,8 +219,8 @@ function paintNode(
   ctx.beginPath()
   ctx.arc(x, y, r, 0, 2 * Math.PI)
   ctx.fill()
-  // Constant ~8px on screen (canvas ctx is pre-scaled by `scale`) — small and zoom-stable.
-  const fontSize = 8 / scale
+  // Constant ~12px on screen (canvas ctx is pre-scaled by `scale`) — readable and zoom-stable.
+  const fontSize = 12 / scale
   ctx.font = `${fontSize}px ui-sans-serif, system-ui, sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
@@ -229,26 +229,31 @@ function paintNode(
   ctx.fillText(label, x, y + r + 2)
 }
 
-// d3 force: each node carries a slowly wandering heading and gets a tiny push along it, so the
-// constellation drifts softly instead of vibrating. A low velocity clamp keeps motion gentle.
-type SimNode = { vx?: number; vy?: number; _heading?: number }
-const MAX_VELOCITY = 0.25
-const DRIFT_ACCEL = 0.04
-const HEADING_WANDER = 0.05
+// d3 force: each node slowly orbits its own spot via a rotating velocity (a distinct phase per node
+// keeps them out of sync), so the constellation gently floats around position instead of sitting
+// still or vibrating. The spring/charge forces keep the orbit small; the clamp bounds speed.
+type SimNode = { vx?: number; vy?: number; _phase?: number }
+const MAX_VELOCITY = 0.6
+const ORBIT_ACCEL = 0.05
+const ORBIT_SPEED = 0.02 // radians per tick (~5s per loop at 60fps)
 function makeDriftForce() {
   let nodes: SimNode[] = []
+  let tick = 0
   const force = () => {
-    for (const node of nodes) {
-      const heading = (node._heading ?? Math.random() * Math.PI * 2) + (Math.random() - 0.5) * HEADING_WANDER
-      node._heading = heading
-      const vx = (node.vx ?? 0) + Math.cos(heading) * DRIFT_ACCEL
-      const vy = (node.vy ?? 0) + Math.sin(heading) * DRIFT_ACCEL
+    tick++
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i]
+      const phase = node._phase ?? (node._phase = i * 1.7)
+      const angle = tick * ORBIT_SPEED + phase
+      const vx = (node.vx ?? 0) + Math.cos(angle) * ORBIT_ACCEL
+      const vy = (node.vy ?? 0) + Math.sin(angle) * ORBIT_ACCEL
       node.vx = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, vx))
       node.vy = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, vy))
     }
   }
   force.initialize = (n: SimNode[]) => {
     nodes = n
+    tick = 0
   }
   return force
 }
