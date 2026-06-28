@@ -1,12 +1,17 @@
 'use client'
 
+import { type LucideIcon } from 'lucide-react'
+import { useRouter, usePathname } from 'next/navigation'
 import { useDesktop } from './DesktopProvider'
 import { useTheme } from '../../lib/theme.provider'
+import { AppIcon } from './app-icon'
 
 export interface DockItem {
   id: string
-  icon: string
+  glyph: LucideIcon
+  gradient: string
   title: string
+  href?: string
 }
 
 interface DockProps {
@@ -17,15 +22,23 @@ export function Dock({ items }: DockProps) {
   const { windowStates, openWindow, focusWindow, minimizeWindow } = useDesktop()
   const { theme } = useTheme()
   const isLight = theme === 'light'
+  const router = useRouter()
+  const pathname = usePathname()
 
-  const handleClick = (id: string) => {
-    const state = windowStates[id]
+  if (pathname?.startsWith('/docs')) return null
+
+  const handleClick = (item: DockItem) => {
+    if (item.href) {
+      router.push(item.href)
+      return
+    }
+    const state = windowStates[item.id]
     if (state?.isOpen && !state?.isMinimized) {
-      minimizeWindow(id)
+      minimizeWindow(item.id)
     } else if (state?.isOpen && state?.isMinimized) {
-      focusWindow(id)
+      focusWindow(item.id)
     } else {
-      openWindow(id)
+      openWindow(item.id)
     }
   }
 
@@ -38,18 +51,18 @@ export function Dock({ items }: DockProps) {
       }`}>
         {items.map((item) => {
           const state = windowStates[item.id]
-          const isRunning = !!state?.isOpen
+          const isRunning = !item.href && !!state?.isOpen
 
           return (
             <div key={item.id} className="flex flex-col items-center">
               <button
-                onClick={() => handleClick(item.id)}
+                onClick={() => handleClick(item)}
                 className="group relative flex flex-col items-center px-1.5 py-0.5 rounded-xl transition-all duration-200 hover:-translate-y-3"
                 title={item.title}
               >
-                <span className="text-[32px] drop-shadow-lg transition-transform duration-200 group-hover:scale-110">
-                  {item.icon}
-                </span>
+                <div className="transition-transform duration-200 group-hover:scale-110 drop-shadow-lg">
+                  <AppIcon glyph={item.glyph} gradient={item.gradient} size="dock" />
+                </div>
                 {/* Tooltip */}
                 <span className={`absolute -top-9 px-2.5 py-1 backdrop-blur text-[11px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg ${
                   isLight

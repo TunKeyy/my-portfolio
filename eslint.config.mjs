@@ -10,6 +10,8 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // The mcp/ package is a standalone server with its own deps; keep it out of the web app's lint.
+  { ignores: ["mcp/**"] },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 
