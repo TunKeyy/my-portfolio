@@ -25,6 +25,32 @@ const nextConfig: NextConfig = {
     
     return config;
   },
+  async headers() {
+    // CSP backstop for the public knowledge viewer. 'unsafe-inline' on script-src is required by
+    // Next's inline bootstrap without per-request nonces; a strict nonce-based policy (middleware)
+    // is a recommended follow-up. Sanitization (write + render) remains the primary XSS defense.
+    return [
+      {
+        source: '/second-brain',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' https: data:",
+              "connect-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "frame-ancestors 'none'",
+              "frame-src 'none'",
+            ].join('; '),
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

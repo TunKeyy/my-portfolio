@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Sun, Moon, Wifi, Battery, Search } from 'lucide-react'
+import { X, Sun, Moon, Wifi, Battery, Search, type LucideIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useTheme } from '../../lib/theme.provider'
+import { AppIcon } from './app-icon'
 
 interface TabletApp {
   id: string
   title: string
-  icon: string
+  glyph: LucideIcon
+  gradient: string
+  href?: string
 }
 
 interface TabletLayoutProps {
@@ -135,9 +139,9 @@ function TabletDock({
                 }`}
                 title={item.title}
               >
-                <span className="text-[28px] drop-shadow-lg transition-transform duration-200 group-hover:scale-110">
-                  {item.icon}
-                </span>
+                <div className="transition-transform duration-200 group-hover:scale-110 drop-shadow-lg">
+                  <AppIcon glyph={item.glyph} gradient={item.gradient} size="dock" />
+                </div>
                 <span
                   className={`absolute -top-8 px-2.5 py-1 backdrop-blur text-[11px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg ${
                     isLight
@@ -170,12 +174,17 @@ export function TabletLayout({ apps, renderContent }: TabletLayoutProps) {
   const isLight = theme === 'light'
   const [activeApp, setActiveApp] = useState<string | null>(null)
   const [openApps, setOpenApps] = useState<string[]>([])
+  const router = useRouter()
 
-  const openApp = (id: string) => {
-    if (!openApps.includes(id)) {
-      setOpenApps((prev) => [...prev, id])
+  const openApp = (app: TabletApp) => {
+    if (app.href) {
+      router.push(app.href)
+      return
     }
-    setActiveApp(id)
+    if (!openApps.includes(app.id)) {
+      setOpenApps((prev) => [...prev, app.id])
+    }
+    setActiveApp(app.id)
   }
 
   const closeApp = (id: string) => {
@@ -188,13 +197,18 @@ export function TabletLayout({ apps, renderContent }: TabletLayoutProps) {
   }
 
   const handleDockSelect = (id: string) => {
+    const app = apps.find((a) => a.id === id)
+    if (!app) return
+    if (app.href) {
+      router.push(app.href)
+      return
+    }
     if (activeApp === id) {
-      // minimize - just deactivate
       setActiveApp(null)
     } else if (openApps.includes(id)) {
       setActiveApp(id)
     } else {
-      openApp(id)
+      openApp(app)
     }
   }
 
@@ -217,12 +231,12 @@ export function TabletLayout({ apps, renderContent }: TabletLayoutProps) {
         {apps.map((app) => (
           <button
             key={app.id}
-            onClick={() => openApp(app.id)}
+            onClick={() => openApp(app)}
             className="flex flex-col items-center gap-1 w-[72px] p-2 rounded-xl hover:bg-white/10 transition-colors group"
           >
-            <span className="text-[36px] drop-shadow-lg group-hover:scale-110 transition-transform">
-              {app.icon}
-            </span>
+            <div className="group-hover:scale-110 transition-transform drop-shadow-lg">
+              <AppIcon glyph={app.glyph} gradient={app.gradient} size="grid" />
+            </div>
             <span className="text-[10px] text-center leading-tight drop-shadow-md font-medium text-white/80 w-16 truncate">
               {app.title}
             </span>
@@ -278,7 +292,7 @@ export function TabletLayout({ apps, renderContent }: TabletLayoutProps) {
                     isLight ? 'text-gray-600' : 'text-gray-400'
                   }`}
                 >
-                  <span>{activeAppData.icon}</span>
+                  <AppIcon glyph={activeAppData.glyph} gradient={activeAppData.gradient} size="sm" />
                   <span>{activeAppData.title}</span>
                 </span>
               </div>

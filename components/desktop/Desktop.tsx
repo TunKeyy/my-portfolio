@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   Github,
@@ -11,7 +12,19 @@ import {
   Copy,
   Mail,
   Phone,
+  User,
+  BookOpen,
+  Zap,
+  Briefcase,
+  FolderOpen,
+  Trophy,
+  MessageCircle,
+  FileText,
+  BookMarked,
+  Brain,
 } from 'lucide-react'
+import { AppIcon } from './app-icon'
+import { type LucideIcon } from 'lucide-react'
 import { DesktopProvider, useDesktop } from './DesktopProvider'
 import { MenuBar } from './MenuBar'
 import { Window } from './Window'
@@ -35,20 +48,24 @@ import iotImage from '../../public/images/iot_image.png'
 
 // ===== App Configuration =====
 const APPS = [
-  { id: 'profile', title: 'Profile', icon: '👤', w: 640, h: 480, x: 120, y: 60 },
-  { id: 'about', title: 'About Me', icon: '📖', w: 780, h: 560, x: 180, y: 80 },
-  { id: 'skills', title: 'Skills', icon: '⚡', w: 720, h: 560, x: 240, y: 70 },
-  { id: 'experience', title: 'Experience', icon: '💼', w: 760, h: 540, x: 200, y: 90 },
-  { id: 'fields', title: 'Fields', icon: '📂', w: 680, h: 480, x: 280, y: 100 },
-  { id: 'certificates', title: 'Certificates', icon: '🏆', w: 640, h: 420, x: 260, y: 85 },
-  { id: 'contact', title: 'Contact', icon: '💬', w: 520, h: 480, x: 320, y: 110 },
-  { id: 'resume', title: 'Resume', icon: '📄', w: 800, h: 650, x: 160, y: 55 },
+  { id: 'profile', title: 'Profile', icon: '👤', glyph: User, gradient: 'from-blue-400 to-blue-600', w: 640, h: 480, x: 120, y: 60 },
+  { id: 'about', title: 'About Me', icon: '📖', glyph: BookOpen, gradient: 'from-pink-400 to-rose-500', w: 780, h: 560, x: 180, y: 80 },
+  { id: 'skills', title: 'Skills', icon: '⚡', glyph: Zap, gradient: 'from-yellow-400 to-amber-500', w: 720, h: 560, x: 240, y: 70 },
+  { id: 'experience', title: 'Experience', icon: '💼', glyph: Briefcase, gradient: 'from-amber-700 to-stone-700', w: 760, h: 540, x: 200, y: 90 },
+  { id: 'fields', title: 'Fields', icon: '📂', glyph: FolderOpen, gradient: 'from-sky-300 to-sky-500', w: 680, h: 480, x: 280, y: 100 },
+  { id: 'certificates', title: 'Certificates', icon: '🏆', glyph: Trophy, gradient: 'from-amber-300 to-orange-500', w: 640, h: 420, x: 260, y: 85 },
+  { id: 'contact', title: 'Contact', icon: '💬', glyph: MessageCircle, gradient: 'from-emerald-400 to-green-600', w: 520, h: 480, x: 320, y: 110 },
+  { id: 'resume', title: 'Resume', icon: '📄', glyph: FileText, gradient: 'from-slate-400 to-slate-600', w: 800, h: 650, x: 160, y: 55 },
+  { id: 'docs', title: 'Docs', icon: '📚', glyph: BookMarked, gradient: 'from-indigo-400 to-violet-600', w: 0, h: 0, x: 0, y: 0, href: '/docs' },
+  { id: 'second-brain', title: 'Second Brain', icon: '🧠', glyph: Brain, gradient: 'from-purple-400 to-indigo-600', w: 0, h: 0, x: 0, y: 0, href: '/second-brain' },
 ]
 
 const DOCK_ITEMS: DockItem[] = APPS.map((a) => ({
   id: a.id,
-  icon: a.icon,
+  glyph: a.glyph,
+  gradient: a.gradient,
   title: a.title,
+  href: a.href,
 }))
 
 // ===== Window Content Components =====
@@ -582,16 +599,25 @@ function WindowContent({ id }: { id: string }) {
 
 function DesktopIcon({
   id,
-  icon,
+  glyph,
+  gradient,
   title,
+  href,
 }: {
   id: string
-  icon: string
+  glyph: LucideIcon
+  gradient: string
   title: string
+  href?: string
 }) {
   const { openWindow, windowStates, focusWindow } = useDesktop()
+  const router = useRouter()
 
   const handleClick = () => {
+    if (href) {
+      router.push(href)
+      return
+    }
     const state = windowStates[id]
     if (state?.isOpen) {
       focusWindow(id)
@@ -605,9 +631,9 @@ function DesktopIcon({
       onClick={handleClick}
       className="flex flex-col items-center gap-1 w-[76px] p-2 rounded-xl hover:bg-white/10 dark:hover:bg-white/10 transition-colors group"
     >
-      <span className="text-[40px] drop-shadow-lg group-hover:scale-110 transition-transform">
-        {icon}
-      </span>
+      <div className="group-hover:scale-110 transition-transform drop-shadow-lg">
+        <AppIcon glyph={glyph} gradient={gradient} size="grid" />
+      </div>
       <span className="text-[11px] text-center leading-tight drop-shadow-md font-medium text-white/80 dark:text-white/80">
         {title}
       </span>
@@ -672,7 +698,7 @@ function DesktopInner() {
   if (device === 'mobile') {
     return (
       <MobileLayout
-        apps={APPS.map((a) => ({ id: a.id, title: a.title, icon: a.icon }))}
+        apps={APPS.map((a) => ({ id: a.id, title: a.title, glyph: a.glyph, gradient: a.gradient, href: a.href }))}
         renderContent={(id) => <WindowContent id={id} />}
       />
     )
@@ -682,7 +708,7 @@ function DesktopInner() {
   if (device === 'tablet') {
     return (
       <TabletLayout
-        apps={APPS.map((a) => ({ id: a.id, title: a.title, icon: a.icon }))}
+        apps={APPS.map((a) => ({ id: a.id, title: a.title, icon: a.icon, glyph: a.glyph, gradient: a.gradient, href: a.href }))}
         renderContent={(id) => <WindowContent id={id} />}
       />
     )
@@ -704,14 +730,16 @@ function DesktopInner() {
           <DesktopIcon
             key={app.id}
             id={app.id}
-            icon={app.icon}
+            glyph={app.glyph}
+            gradient={app.gradient}
             title={app.title}
+            href={app.href}
           />
         ))}
       </div>
 
-      {/* Windows */}
-      {APPS.map((app) => (
+      {/* Windows — skip href-only apps (they navigate externally) */}
+      {APPS.filter((app) => !app.href).map((app) => (
         <Window
           key={app.id}
           id={app.id}

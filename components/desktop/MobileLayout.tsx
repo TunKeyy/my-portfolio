@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, Sun, Moon, Wifi, Battery } from 'lucide-react'
+import { ChevronLeft, Sun, Moon, Wifi, Battery, type LucideIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useTheme } from '../../lib/theme.provider'
+import { AppIcon } from './app-icon'
 
 interface MobileApp {
   id: string
   title: string
-  icon: string
+  glyph: LucideIcon
+  gradient: string
+  href?: string
 }
 
 interface MobileLayoutProps {
@@ -61,11 +65,13 @@ function MobileStatusBar() {
 
 function MobileAppHeader({
   title,
-  icon,
+  glyph,
+  gradient,
   onBack,
 }: {
   title: string
-  icon: string
+  glyph: LucideIcon
+  gradient: string
   onBack: () => void
 }) {
   const { theme } = useTheme()
@@ -81,7 +87,7 @@ function MobileAppHeader({
     >
       <button
         onClick={onBack}
-        className={`flex items-center gap-0.5 text-blue-500 text-sm font-medium mr-3`}
+        className="flex items-center gap-0.5 text-blue-500 text-sm font-medium mr-3"
       >
         <ChevronLeft className="w-5 h-5" />
         <span>Back</span>
@@ -92,7 +98,7 @@ function MobileAppHeader({
             isLight ? 'text-gray-800' : 'text-white'
           }`}
         >
-          <span>{icon}</span>
+          <AppIcon glyph={glyph} gradient={gradient} size="sm" />
           <span>{title}</span>
         </span>
       </div>
@@ -105,6 +111,15 @@ export function MobileLayout({ apps, renderContent }: MobileLayoutProps) {
   const { theme } = useTheme()
   const isLight = theme === 'light'
   const [activeApp, setActiveApp] = useState<string | null>(null)
+  const router = useRouter()
+
+  const handleAppClick = (app: MobileApp) => {
+    if (app.href) {
+      router.push(app.href)
+      return
+    }
+    setActiveApp(app.id)
+  }
 
   const activeAppData = apps.find((a) => a.id === activeApp)
 
@@ -142,18 +157,10 @@ export function MobileLayout({ apps, renderContent }: MobileLayoutProps) {
               {apps.map((app) => (
                 <button
                   key={app.id}
-                  onClick={() => setActiveApp(app.id)}
+                  onClick={() => handleAppClick(app)}
                   className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
                 >
-                  <div
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
-                      isLight
-                        ? 'bg-white/70 backdrop-blur-xl'
-                        : 'bg-white/10 backdrop-blur-xl'
-                    }`}
-                  >
-                    <span className="text-2xl">{app.icon}</span>
-                  </div>
+                  <AppIcon glyph={app.glyph} gradient={app.gradient} size="grid" />
                   <span className="text-[11px] text-white font-medium drop-shadow-md text-center leading-tight w-16 truncate">
                     {app.title}
                   </span>
@@ -172,18 +179,10 @@ export function MobileLayout({ apps, renderContent }: MobileLayoutProps) {
               {apps.slice(0, 4).map((app) => (
                 <button
                   key={app.id}
-                  onClick={() => setActiveApp(app.id)}
+                  onClick={() => handleAppClick(app)}
                   className="flex flex-col items-center active:scale-95 transition-transform"
                 >
-                  <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      isLight
-                        ? 'bg-white/60 backdrop-blur-xl'
-                        : 'bg-white/10 backdrop-blur-xl'
-                    }`}
-                  >
-                    <span className="text-xl">{app.icon}</span>
-                  </div>
+                  <AppIcon glyph={app.glyph} gradient={app.gradient} size="dock" />
                 </button>
               ))}
             </div>
@@ -215,7 +214,8 @@ export function MobileLayout({ apps, renderContent }: MobileLayoutProps) {
           >
             <MobileAppHeader
               title={activeAppData.title}
-              icon={activeAppData.icon}
+              glyph={activeAppData.glyph}
+              gradient={activeAppData.gradient}
               onBack={() => setActiveApp(null)}
             />
             <div className="flex-1 overflow-y-auto custom-scrollbar">
