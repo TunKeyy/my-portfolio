@@ -77,7 +77,7 @@ export function Constellation({ roots, onOpenNode }: ConstellationProps) {
     const fg = fgRef.current
     if (!fg || graphState.status !== 'ready') return
     if (!reduced) {
-      fg.d3Force?.('jitter', makeJitterForce())
+      fg.d3Force?.('drift', makeDriftForce())
       fg.d3ReheatSimulation?.()
     }
     const t = setTimeout(() => fgRef.current?.zoomToFit?.(600, 70), 500)
@@ -154,7 +154,7 @@ export function Constellation({ roots, onOpenNode }: ConstellationProps) {
           enableNodeDrag={!reduced}
           cooldownTime={reduced ? 0 : Infinity}
           d3AlphaDecay={reduced ? 0.0228 : 0}
-          d3VelocityDecay={0.35}
+          d3VelocityDecay={0.5}
           warmupTicks={30}
           onNodeClick={(n: object) => {
             const node = n as GraphVizNode
@@ -219,7 +219,8 @@ function paintNode(
   ctx.beginPath()
   ctx.arc(x, y, r, 0, 2 * Math.PI)
   ctx.fill()
-  const fontSize = Math.max(9, 11 / scale)
+  // Constant ~8px on screen (canvas ctx is pre-scaled by `scale`) — small and zoom-stable.
+  const fontSize = 8 / scale
   ctx.font = `${fontSize}px ui-sans-serif, system-ui, sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
@@ -228,17 +229,20 @@ function paintNode(
   ctx.fillText(label, x, y + r + 2)
 }
 
-// d3 force: tiny random velocity each tick so nodes keep drifting slightly, with a hard velocity
-// clamp so motion can never accumulate and fling nodes off-screen.
-type SimNode = { vx?: number; vy?: number }
-const MAX_VELOCITY = 1.2
-function makeJitterForce() {
+// d3 force: each node carries a slowly wandering heading and gets a tiny push along it, so the
+// constellation drifts softly instead of vibrating. A low velocity clamp keeps motion gentle.
+type SimNode = { vx?: number; vy?: number; _heading?: number }
+const MAX_VELOCITY = 0.25
+const DRIFT_ACCEL = 0.04
+const HEADING_WANDER = 0.05
+function makeDriftForce() {
   let nodes: SimNode[] = []
-  const force = (alpha: number) => {
-    const k = 0.25 * alpha
+  const force = () => {
     for (const node of nodes) {
-      const vx = (node.vx ?? 0) + (Math.random() - 0.5) * k
-      const vy = (node.vy ?? 0) + (Math.random() - 0.5) * k
+      const heading = (node._heading ?? Math.random() * Math.PI * 2) + (Math.random() - 0.5) * HEADING_WANDER
+      node._heading = heading
+      const vx = (node.vx ?? 0) + Math.cos(heading) * DRIFT_ACCEL
+      const vy = (node.vy ?? 0) + Math.sin(heading) * DRIFT_ACCEL
       node.vx = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, vx))
       node.vy = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, vy))
     }

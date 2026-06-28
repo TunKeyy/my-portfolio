@@ -173,3 +173,59 @@ export async function revalidate(_client: SupabaseClient, _input: unknown, deps:
   await deps.revalidate()
   return { status: 'revalidated' }
 }
+
+// ---- read-only: notes under a node (drives update/clear discovery) ----
+
+export const listNotesInput = z.object({ nodePath: z.string().min(1) })
+export async function listNotes(client: SupabaseClient, input: unknown) {
+  const { nodePath } = listNotesInput.parse(input)
+  const nodeId = await resolvePath(client, nodePath)
+  const { data, error } = await client
+    .from('documents')
+    .select('id,title,tags,body_format,source_url,updated_at')
+    .eq('node_id', nodeId)
+    .order('updated_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return { notes: data ?? [] }
+}
+
+// ---- deletes (for --clear; documents cascade on node delete) ----
+
+export const deleteNoteInput = z.object({ id: z.string().min(1) })
+export async function deleteNote(client: SupabaseClient, input: unknown, deps: ToolDeps = defaultDeps) {
+  const { id } = deleteNoteInput.parse(input)
+  const { error } = await client.from('documents').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  await deps.revalidate()
+  return { status: 'deleted', id }
+}
+
+export const deleteNodeInput = z.object({
+  path: z.string().min(1).optional(),
+  id: z.string().min(1).optional(),
+  recursive: z.boolean().optional(),
+})
+export async function deleteNode(client: SupabaseClient, input: unknown, deps: ToolDeps = defaultDeps) {
+  const p = deleteNodeInput.parse(input)
+  if (!p.path && !p.id) throw new Error('provide path or id')
+  const id = p.id ?? (await resolvePath(client, p.path as string))
+  // BFS descendants; parent_id is ON DELETE RESTRICT so we must remove children first.
+  const order: string[] = [id]
+  let frontier: string[] = [id]
+  while (frontier.length) {
+    const { data, error } = await client.from('nodes').select('id').in('parent_id', frontier)
+    if (error) throw new Error(error.message)
+    const children = (data ?? []).map((r) => r.id as string)
+    if (children.length === 0) break
+    if (!p.recursive)
+      throw new Error(`node has ${children.length} child node(s) — pass recursive: true to delete the subtree`)
+    order.push(...children)
+    frontier = children
+  }
+  for (const nid of order.reverse()) {
+    const { error } = await client.from('nodes').delete().eq('id', nid)
+    if (error) throw new Error(error.message)
+  }
+  await deps.revalidate()
+  return { status: 'deleted', id, removed_nodes: order.length }
+}

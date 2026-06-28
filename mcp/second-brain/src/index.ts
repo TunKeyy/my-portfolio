@@ -13,7 +13,13 @@ import {
   addNoteInput,
   createNode,
   createNodeInput,
+  deleteNode,
+  deleteNodeInput,
+  deleteNote,
+  deleteNoteInput,
   getTree,
+  listNotes,
+  listNotesInput,
   moveNode,
   moveNodeInput,
   revalidate,
@@ -77,6 +83,27 @@ server.tool('update_note', updateNoteInput.shape, async (args) => {
 server.tool('revalidate', {}, async () => {
   try {
     return ok(await revalidate(client, {}))
+  } catch (e) {
+    return fail(e)
+  }
+})
+server.tool('list_notes', listNotesInput.shape, async (args) => {
+  try {
+    return ok(await listNotes(client, args))
+  } catch (e) {
+    return fail(e)
+  }
+})
+server.tool('delete_note', deleteNoteInput.shape, async (args) => {
+  try {
+    return ok(await deleteNote(client, args))
+  } catch (e) {
+    return fail(e)
+  }
+})
+server.tool('delete_node', deleteNodeInput.shape, async (args) => {
+  try {
+    return ok(await deleteNode(client, args))
   } catch (e) {
     return fail(e)
   }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { addNote, createNode, getTree, search } from '../src/tools'
+import { addNote, createNode, deleteNode, deleteNote, getTree, listNotes, search } from '../src/tools'
 import { mockClient, callsOf } from './mock-client'
 
 const deps = () => ({ revalidate: vi.fn().mockResolvedValue(undefined) })
@@ -68,5 +68,69 @@ describe('addNote validation + publish gate', () => {
     )
     expect(res).toMatchObject({ status: 'created', id: 'doc1' })
     expect(d.revalidate).toHaveBeenCalledOnce()
+  })
+})
+
+describe('listNotes (read-only)', () => {
+  it('resolves the node path then returns its documents', async () => {
+    const client = mockClient([
+      { data: [{ id: 'n1' }] }, // resolvePath
+      { data: [{ id: 'd1', title: 't' }] }, // documents
+    ])
+    const res = await listNotes(client, { nodePath: 'A' })
+    expect(res.notes).toEqual([{ id: 'd1', title: 't' }])
+  })
+})
+
+describe('deleteNote', () => {
+  it('deletes by id and revalidates', async () => {
+    const d = deps()
+    const client = mockClient([{ error: null }])
+    const res = await deleteNote(client, { id: 'doc1' }, d)
+    expect(res).toMatchObject({ status: 'deleted', id: 'doc1' })
+    expect(d.revalidate).toHaveBeenCalledOnce()
+  })
+})
+
+describe('deleteNode', () => {
+  it('deletes a leaf node by path and revalidates', async () => {
+    const d = deps()
+    const client = mockClient([
+      { data: [{ id: 'n1' }] }, // resolvePath
+      { data: [] }, // no children
+      { error: null }, // delete n1
+    ])
+    const res = await deleteNode(client, { path: 'A' }, d)
+    expect(res).toMatchObject({ status: 'deleted', id: 'n1', removed_nodes: 1 })
+    expect(d.revalidate).toHaveBeenCalledOnce()
+  })
+
+  it('refuses a node with children unless recursive', async () => {
+    const d = deps()
+    const client = mockClient([
+      { data: [{ id: 'root' }] }, // resolvePath
+      { data: [{ id: 'c1' }] }, // has a child
+    ])
+    await expect(deleteNode(client, { path: 'A' }, d)).rejects.toThrow(/recursive: true/)
+    expect(d.revalidate).not.toHaveBeenCalled()
+  })
+
+  it('recursive delete removes the subtree child-first', async () => {
+    const d = deps()
+    const client = mockClient([
+      { data: [{ id: 'root' }] }, // resolvePath
+      { data: [{ id: 'c1' }] }, // children of root
+      { data: [] }, // children of c1
+      { error: null }, // delete c1
+      { error: null }, // delete root
+    ])
+    const res = await deleteNode(client, { path: 'A', recursive: true }, d)
+    expect(res).toMatchObject({ status: 'deleted', id: 'root', removed_nodes: 2 })
+    const deletes = callsOf(client).filter((c) => c[0] === 'eq' && c[2] === 'id')
+    expect(deletes.map((c) => c[3])).toEqual(['c1', 'root']) // children before parents
+  })
+
+  it('requires path or id', async () => {
+    await expect(deleteNode(mockClient([]), {}, deps())).rejects.toThrow(/provide path or id/)
   })
 })

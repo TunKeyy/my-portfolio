@@ -17,7 +17,7 @@ export function mockClient(queue: MockResponse[]) {
         calls.push([m, table, ...args])
         return b
       }
-    for (const m of ['select', 'insert', 'update', 'delete', 'eq', 'is', 'ilike', 'limit', 'order']) {
+    for (const m of ['select', 'insert', 'update', 'delete', 'eq', 'is', 'in', 'ilike', 'limit', 'order']) {
       b[m] = chain(m)
     }
     b.single = () => {

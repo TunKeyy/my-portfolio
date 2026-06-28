@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // jsdom (via isomorphic-dompurify) uses dynamic requires that break when bundled into a
+  // serverless function — keep it external so it loads from node_modules at runtime.
+  serverExternalPackages: ['isomorphic-dompurify', 'jsdom'],
   // Turbopack config
   turbopack: {
     resolveAlias: {

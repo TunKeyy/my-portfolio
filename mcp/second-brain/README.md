@@ -17,8 +17,13 @@ accept credentials as inputs. After every write it pings the site's revalidate e
 | `move_node` | Re-parent a node (rejects cycles) | yes |
 | `add_note` | Add a note to a node (idempotent on `node_id`+`title`) | yes |
 | `update_note` | Edit a note | yes |
+| `list_notes` | List notes under a node (`nodePath`) — drives update/clear discovery | no |
+| `delete_note` | Delete a note by `id` | yes |
+| `delete_node` | Delete a node by `path`/`id` (docs cascade; `recursive: true` for a subtree) | yes |
 | `revalidate` | Manually re-trigger site revalidation | (trigger) |
 
+- `delete_node` refuses a node with children unless `recursive: true`; it removes the subtree
+  child-first (the `parent_id` FK is `ON DELETE RESTRICT`) and lets documents cascade.
 - `body` accepts `format: 'html' | 'markdown'`. HTML is sanitized at write; Markdown is stored raw and
   converted + sanitized at render by the Next app (no duplication).
 - **Publish gate (strict):** every write is scanned for secrets **and** PII (emails, phones, IPs,
