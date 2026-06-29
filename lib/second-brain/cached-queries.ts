@@ -1,7 +1,6 @@
 import { unstable_cache } from 'next/cache'
 import { createServerClient } from '@/lib/supabase/server-client'
 import { getChildren, getNodeWithDocuments, getRoots } from './queries'
-import { renderDocuments } from './render-documents'
 import type { NodeWithDocuments, Result, SecondBrainNode } from './types'
 
 // supabase-js does NOT forward Next's { next: { tags } }, so revalidateTag over raw queries is a
@@ -36,6 +35,9 @@ export const cachedNodeWithDocuments = unstable_cache(
     unwrap<NodeWithDocuments | null>(async () => {
       const res = await getNodeWithDocuments(createServerClient(), nodeId)
       if (res.error || !res.data) return res
+      // Lazy import: keep jsdom/shiki out of the roots/children/revalidate bundles (they crash at
+      // serverless cold-start). Only this query renders bodies, so only it loads them.
+      const { renderDocuments } = await import('./render-documents')
       // Convert markdown + sanitize bodies here so the (cached) result is render-safe HTML.
       return {
         data: { node: res.data.node, documents: await renderDocuments(res.data.documents) },
