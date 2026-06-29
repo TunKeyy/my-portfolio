@@ -27,6 +27,25 @@ function node(id: string, parent: string | null = null): SecondBrainNode {
   }
 }
 
+function docBundle(id: string, nodeId: string) {
+  return {
+    node: node(nodeId),
+    documents: [
+      {
+        id,
+        node_id: nodeId,
+        title: id.toUpperCase(),
+        body: '<p>x</p>',
+        body_format: 'html',
+        source_url: null,
+        tags: [],
+        created_at: '',
+        updated_at: '',
+      },
+    ],
+  }
+}
+
 const roots = [node('a'), node('b')]
 
 interface Handler {
@@ -60,13 +79,26 @@ describe('useGraphNavigation hook', () => {
     expect(result.current.focus).toBeNull()
   })
 
-  it('dive into a leaf (no children) opens its notes, does not change focus', async () => {
+  it('dive into a childless node is a no-op (its docs are reachable as satellites)', async () => {
     stubFetch([{ match: /\/children$/, body: { data: [] } }])
-    const onOpenNode = vi.fn()
-    const { result } = renderHook(() => useGraphNavigation(roots, onOpenNode))
+    const { result } = renderHook(() => useGraphNavigation(roots))
     result.current.dive(node('a'))
-    await waitFor(() => expect(onOpenNode).toHaveBeenCalledWith('a'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.focus).toBeNull()
+  })
+
+  it('shows each orbit node\'s documents as satellites without diving', async () => {
+    stubFetch([
+      { match: /\/nodes\/a$/, body: { data: docBundle('d1', 'a') } },
+      { match: /\/nodes\/b$/, body: { data: { node: node('b'), documents: [] } } },
+    ])
+    const { result } = renderHook(() => useGraphNavigation(roots))
+    await waitFor(() =>
+      expect(result.current.graph.nodes.some((n) => n.id === 'doc:d1')).toBe(true)
+    )
+    const docNode = result.current.graph.nodes.find((n) => n.id === 'doc:d1')
+    expect(docNode?.kind).toBe('document')
+    expect(result.current.focus).toBeNull() // no dive needed
   })
 
   it('dive into a parent focuses it and fetches children exactly once (no double-fetch)', async () => {
@@ -74,12 +106,10 @@ describe('useGraphNavigation hook', () => {
       { match: /\/children$/, body: { data: [node('a1', 'a')] } },
       { match: /\/nodes\/a$/, body: { data: { node: node('a'), documents: [] } } },
     ])
-    const onOpenNode = vi.fn()
-    const { result } = renderHook(() => useGraphNavigation(roots, onOpenNode))
+    const { result } = renderHook(() => useGraphNavigation(roots))
     result.current.dive(node('a'))
     await waitFor(() => expect(result.current.focus?.id).toBe('a'))
     expect(result.current.graph.nodes.some((n) => n.id === 'a1')).toBe(true)
-    expect(onOpenNode).not.toHaveBeenCalled()
     const childrenCalls = fetchFn.mock.calls.filter(([u]) => /\/children$/.test(u as string))
     expect(childrenCalls).toHaveLength(1)
   })

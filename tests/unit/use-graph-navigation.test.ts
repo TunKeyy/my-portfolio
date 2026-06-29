@@ -10,7 +10,7 @@ import {
   searchForFocus,
   type NavState,
 } from '@/components/second-brain/use-graph-navigation'
-import type { SecondBrainNode } from '@/lib/second-brain/types'
+import type { SecondBrainDocument, SecondBrainNode } from '@/lib/second-brain/types'
 
 function node(id: string, parent: string | null = null): SecondBrainNode {
   return {
@@ -22,6 +22,20 @@ function node(id: string, parent: string | null = null): SecondBrainNode {
     color: '#fff',
     icon: null,
     sort_order: 0,
+    created_at: '',
+    updated_at: '',
+  }
+}
+
+function doc(id: string, nodeId: string): SecondBrainDocument {
+  return {
+    id,
+    node_id: nodeId,
+    title: id.toUpperCase(),
+    body: '<p>x</p>',
+    body_format: 'html',
+    source_url: null,
+    tags: [],
     created_at: '',
     updated_at: '',
   }
@@ -63,24 +77,35 @@ describe('currentFocus', () => {
 })
 
 describe('buildGraphData', () => {
-  it('roots view: yellow centre hub + roots, links hub->root', () => {
-    const g = buildGraphData(null, [], [node('a'), node('b')])
+  it('roots view: yellow centre hub + roots, solid links hub->root', () => {
+    const g = buildGraphData(null, [], [node('a'), node('b')], {})
     expect(g.nodes[0]).toMatchObject({ id: CENTER_ID, kind: 'core', name: '' })
     expect(g.nodes.slice(1).map((n) => n.id)).toEqual(['a', 'b'])
     expect(g.nodes.slice(1).every((n) => n.kind === 'root')).toBe(true)
     expect(g.links).toEqual([
-      { source: CENTER_ID, target: 'a' },
-      { source: CENTER_ID, target: 'b' },
+      { source: CENTER_ID, target: 'a', kind: 'node' },
+      { source: CENTER_ID, target: 'b', kind: 'node' },
     ])
   })
 
-  it('focus view: centre hub + children, links hub->child', () => {
-    const g = buildGraphData(node('a'), [node('b', 'a'), node('c', 'a')], [])
+  it('focus view: centre hub + children, solid node links', () => {
+    const g = buildGraphData(node('a'), [node('b', 'a'), node('c', 'a')], [], {})
     expect(g.nodes[0]).toMatchObject({ id: CENTER_ID, kind: 'core' })
     expect(g.nodes.slice(1).every((n) => n.kind === 'child')).toBe(true)
     expect(g.links).toEqual([
-      { source: CENTER_ID, target: 'b' },
-      { source: CENTER_ID, target: 'c' },
+      { source: CENTER_ID, target: 'b', kind: 'node' },
+      { source: CENTER_ID, target: 'c', kind: 'node' },
+    ])
+  })
+
+  it('an orbit node carries its documents as satellites (dashed link node->doc)', () => {
+    const g = buildGraphData(node('a'), [node('b', 'a')], [], { b: [doc('d1', 'b')] })
+    const docNode = g.nodes.find((n) => n.kind === 'document')
+    expect(docNode).toMatchObject({ id: 'doc:d1', kind: 'document', name: 'D1' })
+    expect(docNode?.doc?.id).toBe('d1')
+    expect(g.links).toEqual([
+      { source: CENTER_ID, target: 'b', kind: 'node' },
+      { source: 'b', target: 'doc:d1', kind: 'document' },
     ])
   })
 })

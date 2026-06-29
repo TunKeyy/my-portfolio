@@ -2,8 +2,8 @@
 
 import { type ComponentType, useEffect, useRef, useState } from 'react'
 import { NodeList } from './tree-list'
-import { useGraphNavigation, type GraphVizNode } from './use-graph-navigation'
-import type { SecondBrainNode } from '@/lib/second-brain/types'
+import { useGraphNavigation, type GraphVizLink, type GraphVizNode } from './use-graph-navigation'
+import type { SecondBrainDocument, SecondBrainNode } from '@/lib/second-brain/types'
 
 // Load the canvas lib ourselves (client-only) so a chunk-load failure is catchable and falls back
 // to the list view — next/dynamic's load errors do NOT propagate to a React error boundary.
@@ -18,17 +18,30 @@ type GraphState =
 // Generous so a slow first-load / cold compile doesn't prematurely drop to the list.
 const GRAPH_LOAD_TIMEOUT_MS = 12000
 
+// Cap zoom after auto-fit: with only a few (or close) nodes, zoomToFit fills the viewport and
+// balloons them off-screen. Clamp so sparse levels settle at a calm, fully-visible zoom-out.
+const MAX_FIT_ZOOM = 4.5
+
+// Frame the level in a single instant step (no animation). Animating the fit and then animating the
+// clamp back caused a visible small->big->small bounce; doing both at 0ms lands on the final zoom.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function fitAndClamp(fg: any, padding: number) {
+  if (!fg?.zoomToFit) return
+  fg.zoomToFit(0, padding)
+  if ((fg.zoom?.() ?? 0) > MAX_FIT_ZOOM) fg.zoom(MAX_FIT_ZOOM, 0)
+}
+
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 }
 
 interface ConstellationProps {
   roots: SecondBrainNode[]
-  onOpenNode: (id: string) => void
+  onOpenDoc: (doc: SecondBrainDocument) => void
 }
 
-export function Constellation({ roots, onOpenNode }: ConstellationProps) {
-  const { graph, focus, focusDocCount, loading, dive, ascend } = useGraphNavigation(roots, onOpenNode)
+export function Constellation({ roots, onOpenDoc }: ConstellationProps) {
+  const { graph, focus, loading, dive, ascend } = useGraphNavigation(roots)
   const containerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fgRef = useRef<any>(null)
@@ -80,7 +93,7 @@ export function Constellation({ roots, onOpenNode }: ConstellationProps) {
       fg.d3Force?.('drift', makeDriftForce())
       fg.d3ReheatSimulation?.()
     }
-    const t = setTimeout(() => fgRef.current?.zoomToFit?.(600, 70), 500)
+    const t = setTimeout(() => fitAndClamp(fgRef.current, 90), 500)
     return () => clearTimeout(t)
     // key on the level (focus id), not the `graph` object — it changes identity every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -102,11 +115,11 @@ export function Constellation({ roots, onOpenNode }: ConstellationProps) {
   // Re-frame on viewport / orientation change so nodes never end up off-canvas.
   useEffect(() => {
     if (graphState.status !== 'ready' || size.w === 0) return
-    const t = setTimeout(() => fgRef.current?.zoomToFit?.(400, 70), 200)
+    const t = setTimeout(() => fitAndClamp(fgRef.current, 90), 200)
     return () => clearTimeout(t)
   }, [size.w, size.h, graphState.status])
 
-  const nodeListProps = { graph, focus, focusDocCount, onDive: dive, onAscend: ascend, onOpenNode }
+  const nodeListProps = { graph, focus, onDive: dive, onAscend: ascend, onOpenDoc }
 
   // Chunk failed to load -> render the list view instead of a dead page.
   if (graphState.status === 'error') {
@@ -124,15 +137,10 @@ export function Constellation({ roots, onOpenNode }: ConstellationProps) {
       {/* Visible controls so a focused node's notes + ascend are reachable on the canvas. */}
       {focus && (
         <div className="sb-controls">
-          <button type="button" onClick={ascend} className="sb-ascend">
-            ↑ Back
+          <button type="button" onClick={ascend} className="sb-back" aria-label="Back">
+            ←
           </button>
           <span className="sb-focus-title">{focus.title}</span>
-          {focusDocCount > 0 && (
-            <button type="button" onClick={() => onOpenNode(focus.id)} className="sb-notes-badge">
-              View {focusDocCount} {focusDocCount === 1 ? 'note' : 'notes'}
-            </button>
-          )}
         </div>
       )}
       {graphState.status === 'loading' && (
@@ -147,9 +155,15 @@ export function Constellation({ roots, onOpenNode }: ConstellationProps) {
           backgroundColor="rgba(0,0,0,0)"
           nodeRelSize={6}
           nodeLabel={(n: object) => (n as GraphVizNode).name}
-          linkColor={() => 'rgba(250,204,21,0.35)'}
+          linkColor={(l: object) =>
+            (l as GraphVizLink).kind === 'document' ? 'rgba(56,189,248,0.5)' : 'rgba(250,204,21,0.35)'
+          }
           linkWidth={1}
-          linkDirectionalParticles={reduced ? 0 : 2}
+          // Documents connect with a dashed line; concept nodes with a solid (particle) line.
+          linkLineDash={(l: object) => ((l as GraphVizLink).kind === 'document' ? [4, 4] : null)}
+          linkDirectionalParticles={(l: object) =>
+            reduced || (l as GraphVizLink).kind === 'document' ? 0 : 2
+          }
           linkDirectionalParticleWidth={2}
           enableNodeDrag={!reduced}
           cooldownTime={reduced ? 0 : Infinity}
@@ -159,7 +173,9 @@ export function Constellation({ roots, onOpenNode }: ConstellationProps) {
           onNodeClick={(n: object) => {
             const node = n as GraphVizNode
             if (node.kind === 'core') ascend()
-            else if (node.node) dive(node.node)
+            else if (node.kind === 'document') {
+              if (node.doc) onOpenDoc(node.doc)
+            } else if (node.node) dive(node.node)
           }}
           nodeCanvasObject={(n: object, ctx: CanvasRenderingContext2D, scale: number) =>
             paintNode(n as GraphVizNode & { x?: number; y?: number }, ctx, scale)
@@ -204,6 +220,30 @@ function paintNode(
     ctx.beginPath()
     ctx.arc(x, y, r, 0, 2 * Math.PI)
     ctx.fill()
+    return
+  }
+
+  // Document: a small circle (smaller than concept nodes) distinguished by colour + its dashed link.
+  if (n.kind === 'document') {
+    const dr = 4
+    const glow = ctx.createRadialGradient(x, y, dr * 0.3, x, y, dr * 2.4)
+    glow.addColorStop(0, n.color)
+    glow.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = glow
+    ctx.beginPath()
+    ctx.arc(x, y, dr * 2.4, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.fillStyle = n.color
+    ctx.beginPath()
+    ctx.arc(x, y, dr, 0, 2 * Math.PI)
+    ctx.fill()
+    const docFont = 10 / scale
+    ctx.font = `${docFont}px ui-sans-serif, system-ui, sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'top'
+    ctx.fillStyle = 'rgba(186,230,253,0.95)'
+    const docLabel = n.name.length > 18 ? `${n.name.slice(0, 17)}…` : n.name
+    ctx.fillText(docLabel, x, y + dr + 2)
     return
   }
 

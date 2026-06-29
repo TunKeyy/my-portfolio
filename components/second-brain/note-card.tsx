@@ -6,11 +6,11 @@ import type { SecondBrainDocument } from '@/lib/second-brain/types'
 
 const COLLAPSE_THRESHOLD = 600
 
-export function NoteCard({ doc }: { doc: SecondBrainDocument }) {
+export function NoteCard({ doc, forceOpen = false }: { doc: SecondBrainDocument; forceOpen?: boolean }) {
   // Defense in depth: re-sanitize in the real browser (catches mXSS that server jsdom can miss).
   const clean = sanitizeHtml(doc.body ?? '')
   const long = clean.length > COLLAPSE_THRESHOLD
-  const [open, setOpen] = useState(!long)
+  const [open, setOpen] = useState(forceOpen || !long)
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {

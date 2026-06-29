@@ -14,13 +14,18 @@ export interface GraphVizNode {
   id: string
   name: string
   color: string
-  kind: 'root' | 'core' | 'child'
-  node: SecondBrainNode | null // null for the synthetic centre hub
+  kind: 'root' | 'core' | 'child' | 'document'
+  node: SecondBrainNode | null // null for the synthetic centre hub and document nodes
+  doc?: SecondBrainDocument | null // set only for kind 'document'
 }
 export interface GraphVizLink {
   source: string
   target: string
+  kind: 'node' | 'document' // 'document' links render in a distinct (dashed) style
 }
+
+const DOC_COLOR = '#38bdf8'
+const DOC_PREFIX = 'doc:' // namespaces document node ids so they never collide with node ids
 export interface GraphData {
   nodes: GraphVizNode[]
   links: GraphVizLink[]
@@ -60,20 +65,30 @@ function toViz(n: SecondBrainNode, kind: GraphVizNode['kind']): GraphVizNode {
   return { id: n.id, name: n.title, color: n.color ?? DEFAULT_COLOR, kind, node: n }
 }
 
-// Every level is a star: a textless yellow centre hub (ascend) with the level's nodes orbiting it,
-// each joined to the hub by a link. At roots the orbit is the roots; when focused it's the children.
+// Every level is a star: a textless yellow centre hub (ascend) with the level's nodes orbiting it
+// (solid links). Each orbit node carries its own documents as small satellite nodes joined directly
+// to it by a distinct (dashed) link — so a node's documents are visible at the node, no dive needed.
 export function buildGraphData(
   focus: SecondBrainNode | null,
   children: SecondBrainNode[],
-  roots: SecondBrainNode[]
+  roots: SecondBrainNode[],
+  docsByNode: Record<string, SecondBrainDocument[]>
 ): GraphData {
   const orbit = focus ? children : roots
-  const kind: GraphVizNode['kind'] = focus ? 'child' : 'root'
-  const center: GraphVizNode = { id: CENTER_ID, name: '', color: CENTER_COLOR, kind: 'core', node: null }
-  return {
-    nodes: [center, ...orbit.map((n) => toViz(n, kind))],
-    links: orbit.map((n) => ({ source: CENTER_ID, target: n.id })),
+  const orbitKind: GraphVizNode['kind'] = focus ? 'child' : 'root'
+  const nodes: GraphVizNode[] = [
+    { id: CENTER_ID, name: '', color: CENTER_COLOR, kind: 'core', node: null },
+  ]
+  const links: GraphVizLink[] = []
+  for (const n of orbit) {
+    nodes.push(toViz(n, orbitKind))
+    links.push({ source: CENTER_ID, target: n.id, kind: 'node' })
+    for (const d of docsByNode[n.id] ?? []) {
+      nodes.push({ id: DOC_PREFIX + d.id, name: d.title, color: DOC_COLOR, kind: 'document', node: null, doc: d })
+      links.push({ source: n.id, target: DOC_PREFIX + d.id, kind: 'document' })
+    }
   }
+  return { nodes, links }
 }
 
 export function focusIdFromSearch(search: string): string | null {
@@ -118,26 +133,37 @@ export async function fetchNode(id: string): Promise<NodeBundle | null> {
 export interface UseGraphNavigation {
   graph: GraphData
   focus: SecondBrainNode | null
-  focusDocCount: number
   loading: boolean
   dive: (node: SecondBrainNode) => void
   ascend: () => void
 }
 
-export function useGraphNavigation(
-  roots: SecondBrainNode[],
-  onOpenNode?: (id: string) => void
-): UseGraphNavigation {
+export function useGraphNavigation(roots: SecondBrainNode[]): UseGraphNavigation {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [state, dispatch] = useReducer(graphNavReducer, { stack: [] })
   const [children, setChildren] = useState<SecondBrainNode[]>([])
-  const [focusDocCount, setFocusDocCount] = useState(0)
+  // Documents for every node in the current orbit, keyed by node id — rendered as satellites.
+  const [docsByNode, setDocsByNode] = useState<Record<string, SecondBrainDocument[]>>({})
   const [loading, setLoading] = useState(false)
   const hadFocus = useRef(false) // true once the user has focused a node (gates URL reset-to-roots)
-  const prefetched = useRef<Map<string, SecondBrainNode[]>>(new Map()) // dive-fetched children, reused by the effect
+  const seededChildren = useRef<Map<string, SecondBrainNode[]>>(new Map()) // dive-fetched, reused by effect
   const diveSeq = useRef(0) // ignore superseded dive clicks
+  const docsSeq = useRef(0) // ignore superseded orbit-docs fetches
   const focus = currentFocus(state)
+
+  // Fetch each orbit node's documents in parallel and publish them keyed by node id.
+  const loadOrbitDocs = useCallback((orbit: SecondBrainNode[]) => {
+    const seq = ++docsSeq.current
+    setDocsByNode({})
+    if (orbit.length === 0) return
+    Promise.all(
+      orbit.map((n) => fetchNode(n.id).then((b) => [n.id, b?.documents ?? []] as const))
+    ).then((entries) => {
+      if (seq !== docsSeq.current) return // a newer orbit superseded this fetch
+      setDocsByNode(Object.fromEntries(entries))
+    })
+  }, [])
 
   // Resolve a ?node= deep link once on mount; stale/deleted id falls back to roots.
   useEffect(() => {
@@ -156,27 +182,25 @@ export function useGraphNavigation(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Single source of truth: load the focused node's children + note count, and sync the URL.
+  // Single source of truth: load the focused node's children, fetch the orbit's docs, sync the URL.
   useEffect(() => {
     if (!focus) {
       setChildren([])
-      setFocusDocCount(0)
-      // Only reset the URL after a real focus existed — never strip a deep link on first paint.
+      loadOrbitDocs(roots) // roots are the orbit at the top level
       if (hadFocus.current) router.replace('/second-brain', { scroll: false })
       return
     }
     hadFocus.current = true
     let active = true
     setLoading(true)
-    // Reuse children already fetched by dive() for this node (no second request, no split-brain).
-    const seeded = prefetched.current.get(focus.id)
-    prefetched.current.delete(focus.id)
+    const seeded = seededChildren.current.get(focus.id)
+    seededChildren.current.delete(focus.id)
     const childrenPromise = seeded ? Promise.resolve(seeded) : fetchChildren(focus.id)
-    Promise.all([childrenPromise, fetchNode(focus.id)]).then(([kids, bundle]) => {
+    childrenPromise.then((kids) => {
       if (!active) return
       setChildren(kids)
-      setFocusDocCount(bundle?.documents.length ?? 0)
       setLoading(false)
+      loadOrbitDocs(kids)
     })
     router.replace(`/second-brain${searchForFocus(focus.id)}`, { scroll: false })
     return () => {
@@ -185,26 +209,23 @@ export function useGraphNavigation(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus?.id])
 
-  // Fetch children once to decide: dive if any (seed them for the effect), else open the leaf's notes.
-  const dive = useCallback(
-    (node: SecondBrainNode) => {
-      const seq = ++diveSeq.current
-      setLoading(true)
-      fetchChildren(node.id).then((kids) => {
-        if (seq !== diveSeq.current) return // a newer click superseded this one
-        if (kids.length > 0) {
-          prefetched.current.set(node.id, kids)
-          dispatch({ type: 'DIVE', node })
-        } else {
-          setLoading(false)
-          onOpenNode?.(node.id)
-        }
-      })
-    },
-    [onOpenNode]
-  )
+  // Dive only into nodes that have children; a node's own documents are already shown (as satellites)
+  // at this level, so a childless node is not something to enter.
+  const dive = useCallback((node: SecondBrainNode) => {
+    const seq = ++diveSeq.current
+    setLoading(true)
+    fetchChildren(node.id).then((kids) => {
+      if (seq !== diveSeq.current) return // a newer click superseded this one
+      if (kids.length > 0) {
+        seededChildren.current.set(node.id, kids)
+        dispatch({ type: 'DIVE', node })
+      } else {
+        setLoading(false) // leaf — open a document via its satellite instead
+      }
+    })
+  }, [])
 
   const ascend = useCallback(() => dispatch({ type: 'ASCEND' }), [])
 
-  return { graph: buildGraphData(focus, children, roots), focus, focusDocCount, loading, dive, ascend }
+  return { graph: buildGraphData(focus, children, roots, docsByNode), focus, loading, dive, ascend }
 }

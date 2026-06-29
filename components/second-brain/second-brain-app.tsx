@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { Constellation } from './constellation'
-import { NodeDrawer } from './node-drawer'
-import type { SecondBrainNode } from '@/lib/second-brain/types'
+import { DocumentWindow } from './document-window'
+import type { SecondBrainDocument, SecondBrainNode } from '@/lib/second-brain/types'
 
 export function SecondBrainApp({ roots }: { roots: SecondBrainNode[] }) {
-  // Drawer target node; Phase 4 renders <NodeDrawer> from this state.
-  const [drawerNodeId, setDrawerNodeId] = useState<string | null>(null)
+  // The document opened from a clicked document node; rendered in the content window.
+  const [openDoc, setOpenDoc] = useState<SecondBrainDocument | null>(null)
 
   return (
     <main className="sb-root">
@@ -18,13 +18,9 @@ export function SecondBrainApp({ roots }: { roots: SecondBrainNode[] }) {
         <h1 className="sb-title">Second Brain</h1>
       </header>
 
-      <Constellation roots={roots} onOpenNode={setDrawerNodeId} />
+      <Constellation roots={roots} onOpenDoc={setOpenDoc} />
 
-      <NodeDrawer
-        nodeId={drawerNodeId}
-        open={drawerNodeId !== null}
-        onClose={() => setDrawerNodeId(null)}
-      />
+      <DocumentWindow doc={openDoc} open={openDoc !== null} onClose={() => setOpenDoc(null)} />
     </main>
   )
 }
