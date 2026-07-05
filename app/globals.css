@@ -204,14 +204,22 @@ code[data-theme*=" "] span {
   opacity: 0.4;
 }
 
-/* Mermaid: render the client-injected SVG cleanly, stripping code-block chrome (!important beats
-   the context-specific .sb-note-body pre / .prose pre rules regardless of load order). */
+/* Mermaid: Claude-artifact-style panel around the client-injected SVG. !important beats the
+   context-specific .sb-note-body pre / .prose pre rules regardless of load order. */
 pre.mermaid {
-  background: transparent !important;
-  border: none !important;
-  padding: 0.5rem 0 !important;
+  border-radius: 12px !important;
+  padding: 1.25rem !important;
+  border: 1px solid transparent !important;
   text-align: center;
   overflow-x: auto;
+}
+html.light pre.mermaid {
+  background: #faf9f5 !important;
+  border-color: #e6e2d9 !important;
+}
+html.dark pre.mermaid {
+  background: #262624 !important;
+  border-color: #3a3937 !important;
 }
 pre.mermaid svg {
   max-width: 100%;
