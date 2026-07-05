@@ -1,8 +1,10 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import type { MouseEvent as ReactMouseEvent } from 'react'
 import { sanitizeHtml } from '@/lib/second-brain/sanitize-html'
 import { useMermaid } from '@/hooks/useMermaid'
+import { ImageLightbox } from './image-lightbox'
 import type { SecondBrainDocument } from '@/lib/second-brain/types'
 
 const COLLAPSE_THRESHOLD = 600
@@ -13,9 +15,19 @@ export function NoteCard({ doc, forceOpen = false }: { doc: SecondBrainDocument;
   const long = clean.length > COLLAPSE_THRESHOLD
   const [open, setOpen] = useState(forceOpen || !long)
   const [copied, setCopied] = useState(false)
+  const [zoom, setZoom] = useState<{ src: string; alt: string } | null>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   // Render mermaid diagrams once the body is visible in the DOM.
   useMermaid(bodyRef, open ? clean : null)
+
+  // Click any image (Excalidraw SVG or screenshot) to open the zoom/pan viewer.
+  const onBodyClick = (e: ReactMouseEvent) => {
+    const el = e.target as HTMLElement
+    if (el.tagName === 'IMG') {
+      const img = el as HTMLImageElement
+      setZoom({ src: img.currentSrc || img.src, alt: img.alt })
+    }
+  }
 
   const copy = async () => {
     try {
@@ -54,12 +66,19 @@ export function NoteCard({ doc, forceOpen = false }: { doc: SecondBrainDocument;
       </div>
 
       {open ? (
-        <div ref={bodyRef} className="sb-note-body prose" dangerouslySetInnerHTML={{ __html: clean }} />
+        <div
+          ref={bodyRef}
+          className="sb-note-body prose"
+          onClick={onBodyClick}
+          dangerouslySetInnerHTML={{ __html: clean }}
+        />
       ) : (
         <button type="button" className="sb-expand" onClick={() => setOpen(true)}>
           Show note
         </button>
       )}
+
+      {zoom && <ImageLightbox src={zoom.src} alt={zoom.alt} onClose={() => setZoom(null)} />}
     </article>
   )
 }

@@ -426,6 +426,55 @@ html.dark .sb-doc-window {
   border: 1px solid var(--sb-hair);
   border-radius: 8px;
   padding: 1rem;
+  cursor: zoom-in;
+}
+
+/* Full-screen image viewer (zoom + pan) */
+.sb-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(2, 4, 12, 0.88);
+  backdrop-filter: blur(2px);
+}
+.sb-lightbox-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+}
+.sb-lightbox-stage img {
+  max-width: 92vw;
+  max-height: 92vh;
+  background: #ffffff;
+  border-radius: 8px;
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform;
+}
+.sb-lightbox-toolbar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.4rem;
+}
+.sb-lightbox-toolbar button {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.sb-lightbox-toolbar button:hover {
+  background: rgba(0, 0, 0, 0.7);
 }
 .sb-note-card {
   border: 1px solid rgba(148, 163, 184, 0.18);
