@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { sanitizeHtml } from '@/lib/second-brain/sanitize-html'
+import { useMermaid } from '@/hooks/useMermaid'
 import type { SecondBrainDocument } from '@/lib/second-brain/types'
 
 const COLLAPSE_THRESHOLD = 600
@@ -12,6 +13,9 @@ export function NoteCard({ doc, forceOpen = false }: { doc: SecondBrainDocument;
   const long = clean.length > COLLAPSE_THRESHOLD
   const [open, setOpen] = useState(forceOpen || !long)
   const [copied, setCopied] = useState(false)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  // Render mermaid diagrams once the body is visible in the DOM.
+  useMermaid(bodyRef, open ? clean : null)
 
   const copy = async () => {
     try {
@@ -50,7 +54,7 @@ export function NoteCard({ doc, forceOpen = false }: { doc: SecondBrainDocument;
       </div>
 
       {open ? (
-        <div className="sb-note-body prose" dangerouslySetInnerHTML={{ __html: clean }} />
+        <div ref={bodyRef} className="sb-note-body prose" dangerouslySetInnerHTML={{ __html: clean }} />
       ) : (
         <button type="button" className="sb-expand" onClick={() => setOpen(true)}>
           Show note

@@ -1,5 +1,7 @@
 'use client'
+import { useRef } from 'react'
 import { SmartLink } from './smart-link'
+import { useMermaid } from '@/hooks/useMermaid'
 
 /**
  * Renders pre-processed HTML (produced server-side by lib/markdown-to-html.ts).
@@ -11,8 +13,11 @@ import { SmartLink } from './smart-link'
  * External link decoration is handled in globals.css.
  */
 export function DocsContent({ html }: { html: string }) {
+  const ref = useRef<HTMLElement>(null)
+  useMermaid(ref, html)
   return (
     <article
+      ref={ref}
       className="prose prose-slate dark:prose-invert max-w-none"
       // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: html }}

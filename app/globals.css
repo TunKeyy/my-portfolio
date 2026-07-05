@@ -203,3 +203,23 @@ code[data-theme*=" "] span {
   margin-right: 0.25em;
   opacity: 0.4;
 }
+
+/* Mermaid: render the client-injected SVG cleanly, stripping code-block chrome (!important beats
+   the context-specific .sb-note-body pre / .prose pre rules regardless of load order). */
+pre.mermaid {
+  background: transparent !important;
+  border: none !important;
+  padding: 0.5rem 0 !important;
+  text-align: center;
+  overflow-x: auto;
+}
+pre.mermaid svg {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+}
+/* Pre-hydration / render-failure fallback: show the source as muted plain text, not a dark block. */
+pre.mermaid:not([data-processed]) {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
