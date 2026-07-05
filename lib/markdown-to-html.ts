@@ -2,6 +2,7 @@ import { unified, type Plugin } from 'unified'
 import type { Root } from 'hast'
 import remarkParse from 'remark-parse'
 import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
 import remarkRehype from 'remark-rehype'
 import rehypeSlug from 'rehype-slug'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
@@ -58,6 +59,7 @@ export async function markdownToHtml(markdown: string): Promise<string> {
   const result = await unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkBreaks)
     .use(remarkRehype)
     .use(rehypeMermaid)
     .use(rehypeSlug)

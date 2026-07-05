@@ -214,12 +214,12 @@ pre.mermaid {
   overflow-x: auto;
 }
 html.light pre.mermaid {
-  background: #faf9f5 !important;
-  border-color: #e6e2d9 !important;
+  background: #f6f8f8 !important;
+  border-color: #d2d9dd !important;
 }
 html.dark pre.mermaid {
-  background: #262624 !important;
-  border-color: #3a3937 !important;
+  background: #0f1214 !important;
+  border-color: #2a3237 !important;
 }
 pre.mermaid svg {
   max-width: 100%;
