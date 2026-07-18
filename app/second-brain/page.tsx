@@ -13,8 +13,10 @@ export default async function SecondBrainPage() {
   let roots
   try {
     roots = await cachedRoots()
-  } catch {
-    // Paused/cold DB: a degraded state distinct from "no nodes" — never a 500.
+  } catch (e) {
+    // Degraded state distinct from "no nodes" — never a 500. Log the real cause: the message
+    // below hides it from public users, but a paused DB and a client crash must be tellable apart.
+    console.error('[second-brain] roots query failed:', e)
     return (
       <main className="sb-root">
         <div className="sb-degraded" role="status">
