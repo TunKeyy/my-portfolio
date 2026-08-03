@@ -37,36 +37,6 @@ const LIGHT = {
   loopTextColor: '#14181b',
 }
 
-const DARK = {
-  background: '#0f1214',
-  primaryColor: '#181d20',
-  primaryBorderColor: '#e08a2e',
-  primaryTextColor: '#e6eaec',
-  secondaryColor: '#20272b',
-  tertiaryColor: '#181d20',
-  lineColor: '#95a0a8',
-  textColor: '#e6eaec',
-  mainBkg: '#181d20',
-  nodeBorder: '#e08a2e',
-  clusterBkg: '#181d20',
-  clusterBorder: '#2a3237',
-  titleColor: '#e6eaec',
-  edgeLabelBackground: '#0f1214',
-  noteBkgColor: '#20272b',
-  noteBorderColor: '#e08a2e',
-  noteTextColor: '#e6eaec',
-  actorBkg: '#181d20',
-  actorBorder: '#e08a2e',
-  actorTextColor: '#e6eaec',
-  actorLineColor: '#95a0a8',
-  signalColor: '#95a0a8',
-  signalTextColor: '#e6eaec',
-  labelBoxBkgColor: '#181d20',
-  labelBoxBorderColor: '#e08a2e',
-  labelTextColor: '#e6eaec',
-  loopTextColor: '#e6eaec',
-}
-
 // Render <pre class="mermaid"> blocks inside `ref` into SVG on the client. Mermaid mutates the DOM
 // at runtime, so its injected SVG bypasses the HTML sanitizer (which only runs on the string).
 // `dep` should be the injected HTML so we re-run when the body changes. Failures leave the raw
@@ -83,13 +53,13 @@ export function useMermaid(ref: RefObject<HTMLElement | null>, dep: unknown): vo
     void (async () => {
       try {
         const mermaid = (await import('mermaid')).default
-        const light = document.documentElement.classList.contains('light')
+        // Diagrams only render inside the always-light .sb-doc-window, so the theme is fixed.
         mermaid.initialize({
           startOnLoad: false,
           securityLevel: 'strict',
           theme: 'base',
           fontFamily: FONT_STACK,
-          themeVariables: { fontFamily: FONT_STACK, ...(light ? LIGHT : DARK) },
+          themeVariables: { fontFamily: FONT_STACK, ...LIGHT },
         })
         if (cancelled) return
         await mermaid.run({ nodes })

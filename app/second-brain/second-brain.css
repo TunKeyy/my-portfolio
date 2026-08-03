@@ -188,9 +188,13 @@
   place-items: center;
   padding: 1.5rem;
 }
-/* Editorial "paper" reading window (theme-aware) — mirrors the Claude artifact design system:
-   cool paper, burnt-orange accent, system-ui + ui-monospace, mono-uppercase labels. */
+/* Editorial "paper" reading window — mirrors the Claude artifact design system:
+   cool paper, burnt-orange accent, system-ui + ui-monospace, mono-uppercase labels.
+   Always light paper regardless of site theme, so note content stays readable. */
 .sb-doc-window {
+  --sb-paper: #f6f8f8; --sb-panel: #ecf0f1; --sb-panel-2: #e2e7ea;
+  --sb-ink: #14181b; --sb-muted: #59636c; --sb-hair: #d2d9dd;
+  --sb-accent: #c1690f; --sb-code-bg: #eef2f3; --sb-code-ink: #1c2226;
   --sb-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --sb-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   width: min(1080px, 94vw);
@@ -204,16 +208,6 @@
   border-radius: 1rem;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
   animation: sb-pop 0.18s ease-out;
-}
-html.light .sb-doc-window {
-  --sb-paper: #f6f8f8; --sb-panel: #ecf0f1; --sb-panel-2: #e2e7ea;
-  --sb-ink: #14181b; --sb-muted: #59636c; --sb-hair: #d2d9dd;
-  --sb-accent: #c1690f; --sb-code-bg: #eef2f3; --sb-code-ink: #1c2226;
-}
-html.dark .sb-doc-window {
-  --sb-paper: #0f1214; --sb-panel: #181d20; --sb-panel-2: #20272b;
-  --sb-ink: #e6eaec; --sb-muted: #95a0a8; --sb-hair: #2a3237;
-  --sb-accent: #e08a2e; --sb-code-bg: #161b1e; --sb-code-ink: #d6dde1;
 }
 @keyframes sb-pop {
   from {
@@ -344,6 +338,7 @@ html.dark .sb-doc-window {
 }
 .sb-doc-window .sb-note-body strong {
   font-weight: 650;
+  color: var(--sb-ink); /* beat .prose's --tw-prose-bold so bold text follows the paper palette */
 }
 .sb-doc-window .sb-note-body a {
   color: var(--sb-accent);
