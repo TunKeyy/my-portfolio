@@ -18,6 +18,10 @@ import {
   Trophy,
   MessageCircle,
   Brain,
+  Network,
+  Boxes,
+  Binary,
+  Repeat,
 } from 'lucide-react'
 import { AppIcon } from './app-icon'
 import { type LucideIcon } from 'lucide-react'
@@ -188,71 +192,24 @@ function AboutContent() {
 function SkillsContent() {
   const { theme } = useTheme()
   const isLight = theme === 'light'
-  const skills = [
-    {
-      name: 'JavaScript',
-      icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/JavaScript-logo.png/768px-JavaScript-logo.png',
-    },
-    {
-      name: 'TypeScript',
-      icon: 'https://cdn.worldvectorlogo.com/logos/typescript.svg',
-    },
-    {
-      name: 'Node.js',
-      icon: 'https://cdn.iconscout.com/icon/free/png-256/free-node-js-logo-icon-download-in-svg-png-gif-file-formats--nodejs-programming-language-pack-logos-icons-1174925.png?f=webp&w=256',
-    },
-    {
-      name: 'Golang',
-      icon: 'https://go.dev/blog/go-brand/Go-Logo/PNG/Go-Logo_Blue.png',
-    },
-    {
-      name: 'Hasura',
-      icon: 'https://upload.wikimedia.org/wikipedia/commons/d/d9/Hasura-icon-primary.png',
-    },
-    {
-      name: 'GraphQL',
-      icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/GraphQL_Logo.svg/2048px-GraphQL_Logo.svg.png',
-    },
-    {
-      name: 'PostgreSQL',
-      icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Postgresql_elephant.svg/1200px-Postgresql_elephant.svg.png',
-    },
-    {
-      name: 'AWS',
-      icon: 'https://cdn.iconscout.com/icon/free/png-256/free-amazon-aws-3628617-3029842.png',
-    },
-    {
-      name: 'GCP',
-      icon: 'https://cdn.prod.website-files.com/6449405754e757db07f25327/6656429d1776bd09704334e8_google.webp',
-    },
-    {
-      name: 'Github Actions',
-      icon: 'https://cdn.prod.website-files.com/65264f6bf54e751c3a776db1/66d86964333d11e0a1f1da9e_github_actions.png',
-    },
-    {
-      name: 'Bash',
-      icon: 'https://runcode-app-public.s3.amazonaws.com/images/bash-shell-script-online-editor-compiler.original.png',
-    },
-    {
-      name: 'Git',
-      icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Git_icon.svg/2048px-Git_icon.svg.png',
-    },
-    {
-      name: 'Networking',
-      icon: 'https://cdn-icons-png.flaticon.com/512/4152/4152018.png',
-    },
-    {
-      name: 'OOP',
-      icon: 'https://t4.ftcdn.net/jpg/03/81/49/21/360_F_381492166_7VjcukTYqp0unQfIEbH3rZkqOKwore0o.jpg',
-    },
-    {
-      name: 'Algorithms',
-      icon: 'https://cdn-icons-png.flaticon.com/128/10484/10484355.png',
-    },
-    {
-      name: 'Agile/Scrum',
-      icon: 'https://miro.medium.com/v2/resize:fit:512/1*pcRNg2RXH2LWkiciru5fJQ.png',
-    },
+  const skills: { name: string; icon?: string; glyph?: LucideIcon; color?: string }[] = [
+    { name: 'JavaScript', icon: '/images/skills/javascript.svg' },
+    { name: 'TypeScript', icon: '/images/skills/typescript.svg' },
+    { name: 'Node.js', icon: '/images/skills/nodejs.svg' },
+    { name: 'Golang', icon: '/images/skills/go.svg' },
+    { name: 'Hasura', icon: '/images/skills/hasura.png' },
+    { name: 'GraphQL', icon: '/images/skills/graphql.svg' },
+    { name: 'PostgreSQL', icon: '/images/skills/postgresql.svg' },
+    { name: 'AWS', icon: '/images/skills/aws.svg' },
+    { name: 'GCP', icon: '/images/skills/gcp.svg' },
+    { name: 'Github Actions', icon: '/images/skills/github-actions.svg' },
+    { name: 'Bash', icon: '/images/skills/bash.svg' },
+    { name: 'Git', icon: '/images/skills/git.svg' },
+    // No brand mark exists for these, so a vector glyph beats hotlinking stock art
+    { name: 'Networking', glyph: Network, color: 'text-sky-500' },
+    { name: 'OOP', glyph: Boxes, color: 'text-amber-500' },
+    { name: 'Algorithms', glyph: Binary, color: 'text-violet-500' },
+    { name: 'Agile/Scrum', glyph: Repeat, color: 'text-emerald-500' },
   ]
 
   return (
@@ -261,19 +218,31 @@ function SkillsContent() {
         The skills, tools and technologies I am really good at
       </p>
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4">
-        {skills.map((s) => (
-          <div
-            key={s.name}
-            className={`flex flex-col items-center p-2 sm:p-3 rounded-xl transition-colors cursor-default ${isLight ? 'bg-black/5 hover:bg-black/10' : 'bg-white/5 hover:bg-white/10'}`}
-          >
-            <img
-              src={s.icon}
-              alt={s.name}
-              className="w-8 h-8 sm:w-10 sm:h-10 mb-1.5 sm:mb-2 object-contain"
-            />
-            <span className={`text-[10px] sm:text-xs text-center ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>{s.name}</span>
-          </div>
-        ))}
+        {skills.map((s) => {
+          const Glyph = s.glyph
+          return (
+            <div
+              key={s.name}
+              className={`flex flex-col items-center p-2 sm:p-3 rounded-xl transition-colors cursor-default ${isLight ? 'bg-black/5 hover:bg-black/10' : 'bg-white/5 hover:bg-white/10'}`}
+            >
+              {Glyph ? (
+                <Glyph
+                  role="img"
+                  aria-label={s.name}
+                  strokeWidth={1.5}
+                  className={`w-8 h-8 sm:w-10 sm:h-10 mb-1.5 sm:mb-2 ${s.color}`}
+                />
+              ) : (
+                <img
+                  src={s.icon}
+                  alt={s.name}
+                  className="w-8 h-8 sm:w-10 sm:h-10 mb-1.5 sm:mb-2 object-contain"
+                />
+              )}
+              <span className={`text-[10px] sm:text-xs text-center ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>{s.name}</span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
